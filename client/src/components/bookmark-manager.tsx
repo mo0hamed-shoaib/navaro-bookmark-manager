@@ -61,7 +61,7 @@ const bookmarkFormSchema = z.object({
   previewMode: z.enum(["auto", "manual"]).default("auto"),
 });
 
-type ViewMode = "grid" | "list" | "compact";
+type ViewMode = "grid" | "list" | "compact" | "grid2";
 
 export function BookmarkManager() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
@@ -689,6 +689,15 @@ export function BookmarkManager() {
                 <Grid3X3 className="h-4 w-4" />
               </Button>
               <Button
+                variant={viewMode === "grid2" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("grid2")}
+                data-testid="button-view-grid2"
+                title="2-Column Grid"
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
                 variant={viewMode === "list" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("list")}
@@ -845,6 +854,7 @@ export function BookmarkManager() {
             <div className={cn(
               "gap-4",
               viewMode === "grid" && "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+              viewMode === "grid2" && "grid grid-cols-1 md:grid-cols-2",
               viewMode === "list" && "flex flex-col space-y-3",
               viewMode === "compact" && "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8"
             )}>
@@ -856,6 +866,7 @@ export function BookmarkManager() {
                         "hover:shadow-lg transition-all cursor-pointer group relative",
                         selectedBookmarks.has(bookmark.id) && "ring-2 ring-primary",
                         viewMode === "grid" && "h-64",
+                        viewMode === "grid2" && "h-24",
                         viewMode === "list" && "h-20",
                         viewMode === "compact" && "h-24"
                       )}
@@ -964,6 +975,66 @@ export function BookmarkManager() {
                                   <MoreHorizontal className="h-3 w-3" />
                                 </Button>
                               </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {viewMode === "grid2" && (
+                          <div className="flex flex-col h-full justify-center items-center text-center">
+                            {bookmark.favicon && (
+                              <img 
+                                src={bookmark.favicon} 
+                                alt="" 
+                                className="w-8 h-8 rounded mb-2 flex-shrink-0"
+                              />
+                            )}
+                            <h3 className="font-medium text-foreground text-xs truncate group-hover:text-primary transition-colors w-full">
+                              {bookmark.title}
+                            </h3>
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity mt-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-0.5 h-5 w-5"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  togglePin(bookmark);
+                                }}
+                                data-testid={`button-pin-${bookmark.id}`}
+                                title={bookmark.isPinned ? "Unpin" : "Pin"}
+                              >
+                                <Pin className={cn(
+                                  "h-2.5 w-2.5",
+                                  bookmark.isPinned && "fill-current"
+                                )} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-0.5 h-5 w-5"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingBookmark(bookmark);
+                                  setEditBookmarkOpen(true);
+                                }}
+                                data-testid={`button-edit-${bookmark.id}`}
+                                title="Edit"
+                              >
+                                <Edit className="h-2.5 w-2.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-0.5 h-5 w-5"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleContextMenu(e, bookmark);
+                                }}
+                                data-testid={`button-more-${bookmark.id}`}
+                                title="More"
+                              >
+                                <MoreHorizontal className="h-2.5 w-2.5" />
+                              </Button>
                             </div>
                           </div>
                         )}
@@ -1561,6 +1632,14 @@ export function BookmarkManager() {
                     >
                       <Grid3X3 className="h-4 w-4 mr-2" />
                       Grid
+                    </Button>
+                    <Button
+                      variant={viewMode === "grid2" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode("grid2")}
+                    >
+                      <LayoutGrid className="h-4 w-4 mr-2" />
+                      2-Column
                     </Button>
                     <Button
                       variant={viewMode === "list" ? "default" : "outline"}

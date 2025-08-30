@@ -91,15 +91,15 @@ Building a **free website** that combines:
 ### **Phase 2: Core Features**
 *Priority: High - Essential Toby-like functionality*
 
-#### **Phase 2.1: Session Save/Restore** ✅
+#### **Phase 2.1: Session Save/Restore** 🔄 (To Review)
 **Goal**: Capture and restore browser tabs
 - [x] Create browser bookmarklet for tab capture
 - [x] Implement tab data extraction
 - [x] Add "Save Session" button
 - [x] Create session preview UI
 - [x] Implement selective restore
-- [x] Test session functionality
-- [x] Verify no functionality breaks
+- [ ] Test session functionality (Bug reported - sessions not saving)
+- [ ] Verify no functionality breaks
 
 #### **Phase 2.2: Advanced Search** ✅
 **Goal**: Global search with filters
@@ -110,13 +110,13 @@ Building a **free website** that combines:
 - [ ] Add search filters (tags, date, domain)
 - [ ] Verify no functionality breaks
 
-#### **Phase 2.3: 4th View Mode (Grid)** ⏳
+#### **Phase 2.3: 4th View Mode (Grid)** ✅
 **Goal**: Complete Toby's 4 view modes
-- [ ] Implement 2-column Grid layout
-- [ ] Add Grid view toggle
-- [ ] Ensure Grid uses Compact card style
-- [ ] Test responsive behavior
-- [ ] Verify no functionality breaks
+- [x] Implement 2-column Grid layout
+- [x] Add Grid view toggle
+- [x] Ensure Grid uses Compact card style
+- [x] Test responsive behavior
+- [x] Verify no functionality breaks
 
 #### **Phase 2.4: Sidebar-Main Body Integration** ✅
 **Goal**: Enhanced navigation and search experience
@@ -367,4 +367,4 @@ shares (
 ---
 
 *Last Updated: December 2024*
-*Status: Phase 2.1 Complete - Ready for Phase 2.3 (4th View Mode)*
+*Status: Phase 2.3 Complete - Ready for Phase 3.1 (View-Only Sharing)*

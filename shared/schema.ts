@@ -36,7 +36,7 @@ export const collections = pgTable("collections", {
   description: text("description"),
   icon: text("icon").default("folder"),
   orderIndex: text("order_index").notNull().default("0"),
-  viewMode: text("view_mode").default("card"),
+  viewMode: text("view_mode").default("grid"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
