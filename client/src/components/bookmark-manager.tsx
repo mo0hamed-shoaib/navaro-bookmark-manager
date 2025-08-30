@@ -27,7 +27,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger, ContextMenuItem } from "@/components/ui/context-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
@@ -62,6 +62,10 @@ export function BookmarkManager() {
   const [selectedCollection, setSelectedCollection] = useState<string | undefined>();
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; bookmark: Bookmark } | null>(null);
   const [selectedBookmarks, setSelectedBookmarks] = useState<Set<string>>(new Set());
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const [editBookmarkOpen, setEditBookmarkOpen] = useState(false);
+  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
 
@@ -103,6 +107,20 @@ export function BookmarkManager() {
   });
 
   const updateBookmarkMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof bookmarkFormSchema> }) => {
+      const tags = data.tags ? data.tags.split(",").map(tag => tag.trim()).filter(Boolean) : [];
+      const bookmarkData = { ...data, tags };
+      return apiRequest("PATCH", `/api/bookmarks/${id}`, bookmarkData);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks/recent"] });
+      setEditBookmarkOpen(false);
+      setEditingBookmark(null);
+    },
+  });
+
+  const pinBookmarkMutation = useMutation({
     mutationFn: async ({ id, updates }: { id: string; updates: Partial<Bookmark> }) => {
       return apiRequest("PUT", `/api/bookmarks/${id}`, updates);
     },
@@ -190,30 +208,48 @@ export function BookmarkManager() {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
 
+  // Reset form when opening edit dialog with bookmark data
+  useEffect(() => {
+    if (editBookmarkOpen && editingBookmark) {
+      form.reset({
+        title: editingBookmark.title,
+        url: editingBookmark.url,
+        description: editingBookmark.description || "",
+        collectionId: editingBookmark.collectionId || "",
+        tags: editingBookmark.tags?.join(", ") || "",
+      });
+    }
+  }, [editBookmarkOpen, editingBookmark, form]);
+
   return (
     <div className="flex h-screen overflow-hidden bg-background text-foreground">
       {/* Sidebar */}
       <aside className={cn(
-        "bg-card border-r border-border flex flex-col transition-all duration-300 ease-in-out",
+        "bg-card border-r border-border flex flex-col transition-all duration-300 ease-in-out relative",
         sidebarCollapsed ? "w-16" : "w-64"
       )}>
+        {/* Sidebar Toggle Button - Always visible */}
+        <Button
+          variant="ghost"
+          size="sm"
+          className={cn(
+            "absolute top-4 z-10 h-8 w-8 p-0",
+            sidebarCollapsed ? "right-2" : "right-3"
+          )}
+          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+          data-testid="sidebar-toggle"
+          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          <GripVertical className="h-4 w-4" />
+        </Button>
+
         {/* Sidebar Header */}
         <div className="p-4 border-b border-border">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-                <BookmarkIcon className="text-primary-foreground text-sm" />
-              </div>
-              {!sidebarCollapsed && <span className="font-semibold text-lg">Toby</span>}
+          <div className="flex items-center">
+            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+              <BookmarkIcon className="text-primary-foreground text-sm" />
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-              data-testid="sidebar-toggle"
-            >
-              <GripVertical className="h-4 w-4" />
-            </Button>
+            {!sidebarCollapsed && <span className="font-semibold text-lg ml-2">Toby</span>}
           </div>
         </div>
 
@@ -339,30 +375,46 @@ export function BookmarkManager() {
                 onClick={() => setSelectedCollection(undefined)}
                 data-testid="button-all-bookmarks"
               >
-                <FolderOpen className="h-4 w-4" />
+                <span className="text-lg">📁</span>
                 {!sidebarCollapsed && <span className="ml-3 flex-1 text-left">All Bookmarks</span>}
                 {!sidebarCollapsed && (
                   <span className="text-xs text-muted-foreground">{bookmarks.length}</span>
                 )}
               </Button>
               {collections.map((collection) => (
-                <Button
-                  key={collection.id}
-                  variant={selectedCollection === collection.id ? "secondary" : "ghost"}
-                  className="w-full justify-start"
-                  onClick={() => setSelectedCollection(collection.id)}
-                  data-testid={`button-collection-${collection.id}`}
-                >
-                  <Folder className="h-4 w-4" />
+                <div key={collection.id} className="relative group">
+                  <Button
+                    variant={selectedCollection === collection.id ? "secondary" : "ghost"}
+                    className="w-full justify-start"
+                    onClick={() => setSelectedCollection(collection.id)}
+                    data-testid={`button-collection-${collection.id}`}
+                  >
+                    <span className="text-lg">{collection.icon || "📁"}</span>
+                    {!sidebarCollapsed && (
+                      <>
+                        <span className="ml-3 flex-1 text-left">{collection.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {bookmarks.filter(b => b.collectionId === collection.id).length}
+                        </span>
+                      </>
+                    )}
+                  </Button>
                   {!sidebarCollapsed && (
-                    <>
-                      <span className="ml-3 flex-1 text-left">{collection.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {bookmarks.filter(b => b.collectionId === collection.id).length}
-                      </span>
-                    </>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        // TODO: Open emoji picker for this collection
+                      }}
+                      data-testid={`button-edit-collection-${collection.id}`}
+                      title="Change Icon"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
                   )}
-                </Button>
+                </div>
               ))}
             </div>
           </div>
@@ -371,17 +423,66 @@ export function BookmarkManager() {
         {/* User Profile */}
         <div className="p-4 border-t border-border">
           <div className="flex items-center space-x-3">
-            <Avatar className="w-8 h-8">
-              <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&w=32&h=32&fit=crop&crop=face" />
-              <AvatarFallback>JD</AvatarFallback>
-            </Avatar>
+            <DropdownMenu open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="h-auto p-0 hover:bg-transparent"
+                  data-testid="button-profile-menu"
+                >
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&w=32&h=32&fit=crop&crop=face" />
+                    <AvatarFallback>JD</AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                align="start" 
+                className="w-56"
+                data-testid="menu-profile"
+              >
+                <div className="px-3 py-2">
+                  <div className="text-sm font-medium">Demo User</div>
+                  <div className="text-xs text-muted-foreground">demo@example.com</div>
+                </div>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem data-testid="menu-profile-edit">
+                  <User className="h-4 w-4 mr-2" />
+                  Edit Profile
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    setProfileMenuOpen(false);
+                    setSettingsOpen(true);
+                  }}
+                  data-testid="menu-profile-settings"
+                >
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem data-testid="menu-profile-help">
+                  Help & Support
+                </DropdownMenuItem>
+                <DropdownMenuItem data-testid="menu-profile-logout">
+                  Sign Out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             {!sidebarCollapsed && (
               <div className="flex-1">
                 <div className="text-sm font-medium">Demo User</div>
                 <div className="text-xs text-muted-foreground">demo@example.com</div>
               </div>
             )}
-            <Button variant="ghost" size="sm" className="p-1">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="p-1"
+              onClick={() => setSettingsOpen(true)}
+              data-testid="button-settings-sidebar"
+              title="Settings"
+            >
               <Settings className="h-4 w-4" />
             </Button>
           </div>
@@ -512,7 +613,13 @@ export function BookmarkManager() {
                 <span className="text-sm text-muted-foreground">
                   {bookmarks.length} bookmarks
                 </span>
-                <Button variant="ghost" size="sm" data-testid="button-collection-settings">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setSettingsOpen(true)}
+                  data-testid="button-collection-settings"
+                  title="Settings"
+                >
                   <Settings className="h-4 w-4" />
                 </Button>
               </div>
@@ -579,10 +686,10 @@ export function BookmarkManager() {
             </div>
           ) : (
             <div className={cn(
-              "grid gap-4",
-              viewMode === "grid" && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
-              viewMode === "list" && "grid-cols-1",
-              viewMode === "compact" && "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+              "gap-4",
+              viewMode === "grid" && "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+              viewMode === "list" && "flex flex-col space-y-3",
+              viewMode === "compact" && "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8"
             )}>
               {bookmarks.map((bookmark) => (
                 <ContextMenu key={bookmark.id}>
@@ -590,7 +697,10 @@ export function BookmarkManager() {
                     <Card 
                       className={cn(
                         "hover:shadow-lg transition-all cursor-pointer group relative",
-                        selectedBookmarks.has(bookmark.id) && "ring-2 ring-primary"
+                        selectedBookmarks.has(bookmark.id) && "ring-2 ring-primary",
+                        viewMode === "grid" && "h-64",
+                        viewMode === "list" && "h-20",
+                        viewMode === "compact" && "h-24"
                       )}
                       onClick={(e) => {
                         if (e.metaKey || e.ctrlKey) {
@@ -601,51 +711,62 @@ export function BookmarkManager() {
                       }}
                       data-testid={`card-bookmark-${bookmark.id}`}
                     >
-                      <CardContent className="p-4">
-                        <div className="flex items-start space-x-3">
-                          {bookmark.favicon && (
-                            <img 
-                              src={bookmark.favicon} 
-                              alt="" 
-                              className="w-12 h-12 rounded-lg flex-shrink-0"
-                            />
-                          )}
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
-                              {bookmark.title}
-                            </h3>
-                            {bookmark.description && (
-                              <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
-                                {bookmark.description}
-                              </p>
-                            )}
-                            {bookmark.tags && bookmark.tags.length > 0 && (
-                              <div className="flex items-center space-x-1 mt-3 flex-wrap gap-1">
-                                {bookmark.tags.slice(0, 3).map((tag, index) => (
-                                  <Badge 
-                                    key={index} 
-                                    variant="secondary" 
-                                    className="text-xs"
-                                  >
-                                    {tag}
-                                  </Badge>
-                                ))}
-                                {bookmark.tags.length > 3 && (
-                                  <Badge variant="outline" className="text-xs">
-                                    +{bookmark.tags.length - 3}
-                                  </Badge>
-                                )}
+                      <CardContent className={cn(
+                        "p-4 h-full",
+                        viewMode === "list" && "p-3"
+                      )}>
+                        {viewMode === "grid" && (
+                          <div className="flex flex-col h-full">
+                            {/* Preview Image */}
+                            {bookmark.preview?.image && (
+                              <div className="w-full h-32 bg-muted rounded-lg mb-3 overflow-hidden">
+                                <img 
+                                  src={bookmark.preview.image} 
+                                  alt="" 
+                                  className="w-full h-full object-cover"
+                                />
                               </div>
                             )}
-                            <div className="flex items-center justify-between mt-3">
-                              <span className="text-xs text-muted-foreground truncate">
-                                {new URL(bookmark.url).hostname}
-                              </span>
+                            {/* Content */}
+                            <div className="flex items-start space-x-3 flex-1">
+                              {bookmark.favicon && (
+                                <img 
+                                  src={bookmark.favicon} 
+                                  alt="" 
+                                  className="w-8 h-8 rounded flex-shrink-0"
+                                />
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <h3 className="font-medium text-foreground truncate group-hover:text-primary transition-colors text-sm">
+                                  {bookmark.title}
+                                </h3>
+                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                                  {bookmark.description || new URL(bookmark.url).hostname}
+                                </p>
+                                {bookmark.tags && bookmark.tags.length > 0 && (
+                                  <div className="flex items-center space-x-1 mt-2 flex-wrap gap-1">
+                                    {bookmark.tags.slice(0, 2).map((tag, index) => (
+                                      <Badge 
+                                        key={index} 
+                                        variant="secondary" 
+                                        className="text-xs px-1.5 py-0.5"
+                                      >
+                                        {tag}
+                                      </Badge>
+                                    ))}
+                                    {bookmark.tags.length > 2 && (
+                                      <Badge variant="outline" className="text-xs px-1.5 py-0.5">
+                                        +{bookmark.tags.length - 2}
+                                      </Badge>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                               <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="p-1"
+                                  className="p-1 h-6 w-6"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     togglePin(bookmark);
@@ -661,10 +782,11 @@ export function BookmarkManager() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="p-1"
+                                  className="p-1 h-6 w-6"
                                   onClick={(e) => {
                                     e.stopPropagation();
-                                    // TODO: Open edit dialog
+                                    setEditingBookmark(bookmark);
+                                    setEditBookmarkOpen(true);
                                   }}
                                   data-testid={`button-edit-${bookmark.id}`}
                                   title="Edit"
@@ -674,7 +796,7 @@ export function BookmarkManager() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="p-1"
+                                  className="p-1 h-6 w-6"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleContextMenu(e, bookmark);
@@ -687,7 +809,150 @@ export function BookmarkManager() {
                               </div>
                             </div>
                           </div>
-                        </div>
+                        )}
+
+                        {viewMode === "list" && (
+                          <div className="flex items-center space-x-4 h-full">
+                            {bookmark.favicon && (
+                              <img 
+                                src={bookmark.favicon} 
+                                alt="" 
+                                className="w-10 h-10 rounded-lg flex-shrink-0"
+                              />
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-foreground truncate group-hover:text-primary transition-colors">
+                                {bookmark.title}
+                              </h3>
+                              <p className="text-sm text-muted-foreground truncate">
+                                {bookmark.description || new URL(bookmark.url).hostname}
+                              </p>
+                            </div>
+                            {bookmark.tags && bookmark.tags.length > 0 && (
+                              <div className="flex items-center space-x-1 flex-shrink-0">
+                                {bookmark.tags.slice(0, 2).map((tag, index) => (
+                                  <Badge 
+                                    key={index} 
+                                    variant="secondary" 
+                                    className="text-xs"
+                                  >
+                                    {tag}
+                                  </Badge>
+                                ))}
+                                {bookmark.tags.length > 2 && (
+                                  <Badge variant="outline" className="text-xs">
+                                    +{bookmark.tags.length - 2}
+                                  </Badge>
+                                )}
+                              </div>
+                            )}
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  togglePin(bookmark);
+                                }}
+                                data-testid={`button-pin-${bookmark.id}`}
+                                title={bookmark.isPinned ? "Unpin" : "Pin"}
+                              >
+                                <Pin className={cn(
+                                  "h-3 w-3",
+                                  bookmark.isPinned && "fill-current"
+                                )} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingBookmark(bookmark);
+                                  setEditBookmarkOpen(true);
+                                }}
+                                data-testid={`button-edit-${bookmark.id}`}
+                                title="Edit"
+                              >
+                                <Edit className="h-3 w-3" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleContextMenu(e, bookmark);
+                                }}
+                                data-testid={`button-more-${bookmark.id}`}
+                                title="More"
+                              >
+                                <MoreHorizontal className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+
+                        {viewMode === "compact" && (
+                          <div className="flex flex-col h-full justify-center items-center text-center">
+                            {bookmark.favicon && (
+                              <img 
+                                src={bookmark.favicon} 
+                                alt="" 
+                                className="w-8 h-8 rounded mb-2 flex-shrink-0"
+                              />
+                            )}
+                            <h3 className="font-medium text-foreground text-xs truncate group-hover:text-primary transition-colors w-full">
+                              {bookmark.title}
+                            </h3>
+                            <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity mt-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-0.5 h-5 w-5"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  togglePin(bookmark);
+                                }}
+                                data-testid={`button-pin-${bookmark.id}`}
+                                title={bookmark.isPinned ? "Unpin" : "Pin"}
+                              >
+                                <Pin className={cn(
+                                  "h-2.5 w-2.5",
+                                  bookmark.isPinned && "fill-current"
+                                )} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-0.5 h-5 w-5"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingBookmark(bookmark);
+                                  setEditBookmarkOpen(true);
+                                }}
+                                data-testid={`button-edit-${bookmark.id}`}
+                                title="Edit"
+                              >
+                                <Edit className="h-2.5 w-2.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-0.5 h-5 w-5"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleContextMenu(e, bookmark);
+                                }}
+                                data-testid={`button-more-${bookmark.id}`}
+                                title="More"
+                              >
+                                <MoreHorizontal className="h-2.5 w-2.5" />
+                              </Button>
+                            </div>
+                          </div>
+                        )}
                       </CardContent>
                     </Card>
                   </ContextMenuTrigger>
@@ -713,7 +978,13 @@ export function BookmarkManager() {
                       <Pin className="h-4 w-4 mr-2" />
                       {bookmark.isPinned ? "Unpin" : "Pin to Top"}
                     </ContextMenuItem>
-                    <ContextMenuItem data-testid={`menu-edit-${bookmark.id}`}>
+                    <ContextMenuItem 
+                      onClick={() => {
+                        setEditingBookmark(bookmark);
+                        setEditBookmarkOpen(true);
+                      }}
+                      data-testid={`menu-edit-${bookmark.id}`}
+                    >
                       <Edit className="h-4 w-4 mr-2" />
                       Edit
                     </ContextMenuItem>
@@ -871,6 +1142,246 @@ export function BookmarkManager() {
               </div>
             </form>
           </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Bookmark Dialog */}
+      <Dialog open={editBookmarkOpen} onOpenChange={setEditBookmarkOpen}>
+        <DialogContent className="max-w-md" data-testid="dialog-edit-bookmark">
+          <DialogHeader>
+            <DialogTitle>Edit Bookmark</DialogTitle>
+          </DialogHeader>
+          <Form {...form}>
+            <form
+              onSubmit={form.handleSubmit((data) => {
+                if (editingBookmark) {
+                  updateBookmarkMutation.mutate({ id: editingBookmark.id, data });
+                }
+              })}
+              className="space-y-4"
+            >
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Bookmark title" {...field} data-testid="input-edit-bookmark-title" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="url"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>URL</FormLabel>
+                    <FormControl>
+                      <Input placeholder="https://example.com" {...field} data-testid="input-edit-bookmark-url" />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Description</FormLabel>
+                    <FormControl>
+                      <Textarea 
+                        placeholder="Optional description"
+                        className="min-h-[80px]"
+                        {...field}
+                        data-testid="textarea-edit-bookmark-description"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="collectionId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Collection</FormLabel>
+                    <Select onValueChange={field.onChange} value={field.value}>
+                      <FormControl>
+                        <SelectTrigger data-testid="select-edit-bookmark-collection">
+                          <SelectValue placeholder="Select a collection" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {collections.map((collection) => (
+                          <SelectItem key={collection.id} value={collection.id}>
+                            <span className="mr-2">{collection.icon}</span>
+                            {collection.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="tags"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tags</FormLabel>
+                    <FormControl>
+                      <Input 
+                        placeholder="tag1, tag2, tag3"
+                        {...field}
+                        data-testid="input-edit-bookmark-tags"
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <div className="flex justify-end space-x-2">
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  onClick={() => setEditBookmarkOpen(false)}
+                  data-testid="button-cancel-edit-bookmark"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  type="submit"
+                  disabled={updateBookmarkMutation.isPending}
+                  data-testid="button-update-bookmark"
+                >
+                  {updateBookmarkMutation.isPending ? "Updating..." : "Update Bookmark"}
+                </Button>
+              </div>
+            </form>
+          </Form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Settings Dialog */}
+      <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
+        <DialogContent className="max-w-2xl" data-testid="dialog-settings">
+          <DialogHeader>
+            <DialogTitle>Settings</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-6">
+            {/* Theme Settings */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Appearance</h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-foreground">Theme</label>
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    {themeNames.map((themeName) => {
+                      const themeDisplayName = themes[themeName]?.name || themeName;
+                      return (
+                        <Button
+                          key={themeName}
+                          variant={theme === themeName ? "default" : "outline"}
+                          className="justify-start h-auto p-3"
+                          onClick={() => setTheme(themeName)}
+                          data-testid={`settings-theme-${themeName}`}
+                        >
+                          <div className="flex items-center space-x-3">
+                            <div className={cn(
+                              "w-4 h-4 rounded-full",
+                              themeName === "highlighter" && "bg-gradient-to-r from-green-400 to-purple-400",
+                              themeName === "zen-garden" && "bg-gradient-to-r from-green-300 to-purple-300",
+                              themeName === "honey" && "bg-gradient-to-r from-yellow-400 to-orange-500",
+                              themeName === "nomad" && "bg-gradient-to-r from-red-500 to-gray-400",
+                              themeName === "quadratic" && "bg-gradient-to-r from-gray-900 to-white"
+                            )} />
+                            <span className="text-sm">{themeDisplayName}</span>
+                          </div>
+                        </Button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-foreground">Default View Mode</label>
+                  <div className="flex space-x-2 mt-2">
+                    <Button
+                      variant={viewMode === "grid" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode("grid")}
+                    >
+                      <Grid3X3 className="h-4 w-4 mr-2" />
+                      Grid
+                    </Button>
+                    <Button
+                      variant={viewMode === "list" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode("list")}
+                    >
+                      <List className="h-4 w-4 mr-2" />
+                      List
+                    </Button>
+                    <Button
+                      variant={viewMode === "compact" ? "default" : "outline"}
+                      size="sm"
+                      onClick={() => setViewMode("compact")}
+                    >
+                      <LayoutGrid className="h-4 w-4 mr-2" />
+                      Compact
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Data Management */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">Data Management</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium">Export Bookmarks</div>
+                    <div className="text-xs text-muted-foreground">Download your bookmarks as JSON</div>
+                  </div>
+                  <Button variant="outline" size="sm" data-testid="button-export-bookmarks">
+                    Export
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium">Import Bookmarks</div>
+                    <div className="text-xs text-muted-foreground">Import from JSON file</div>
+                  </div>
+                  <Button variant="outline" size="sm" data-testid="button-import-bookmarks">
+                    Import
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* About */}
+            <div>
+              <h3 className="text-lg font-medium mb-4">About</h3>
+              <div className="text-sm text-muted-foreground space-y-2">
+                <div>Toby Bookmark Manager v1.0</div>
+                <div>A modern alternative to browser bookmark management</div>
+                <div className="flex items-center space-x-4 pt-2">
+                  <Button variant="outline" size="sm">
+                    Keyboard Shortcuts
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    Privacy Policy
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

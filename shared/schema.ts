@@ -16,6 +16,7 @@ export const collections = pgTable("collections", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   name: text("name").notNull(),
   description: text("description"),
+  icon: text("icon").default("📁"),
   userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   order: text("order").notNull().default("0"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -50,6 +51,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
 export const insertCollectionSchema = createInsertSchema(collections).pick({
   name: true,
   description: true,
+  icon: true,
   userId: true,
   order: true,
 });
