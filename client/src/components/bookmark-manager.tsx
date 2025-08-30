@@ -390,31 +390,35 @@ export function BookmarkManager() {
 
   // Filter bookmarks based on selected space and collection
   const filteredBookmarks = bookmarks.filter(bookmark => {
-    // Apply search filter if search query exists
+    // Apply search filter if search query exists (GLOBAL SEARCH)
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
       const matchesSearch = 
         bookmark.title.toLowerCase().includes(query) ||
         bookmark.url.toLowerCase().includes(query) ||
         bookmark.description?.toLowerCase().includes(query) ||
-        bookmark.tags?.some(tag => tag.toLowerCase().includes(query));
+        (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
       
       if (!matchesSearch) return false;
     }
 
-    if (selectedCollection) {
-      // If a collection is selected, show only bookmarks in that collection
-      return bookmark.collectionId === selectedCollection;
-    } else if (selectedSpace) {
-      // If only a space is selected, show bookmarks from all collections in that space
-      const collectionIds = collections
-        .filter(c => c.spaceId === selectedSpace)
-        .map(c => c.id);
-      return collectionIds.includes(bookmark.collectionId);
-    } else {
-      // If nothing is selected, show all bookmarks
-      return true;
+    // Apply space/collection filtering only if no search query
+    if (!searchQuery.trim()) {
+      if (selectedCollection) {
+        // If a collection is selected, show only bookmarks in that collection
+        return bookmark.collectionId === selectedCollection;
+      } else if (selectedSpace) {
+        // If only a space is selected, show bookmarks from all collections in that space
+        const collectionIds = collections
+          .filter(c => c.spaceId === selectedSpace)
+          .map(c => c.id);
+        return collectionIds.includes(bookmark.collectionId);
+      }
     }
+    
+    // If search query exists, show all matching bookmarks regardless of space/collection
+    // If no search query, show all bookmarks when nothing is selected
+    return true;
   });
 
   const togglePin = (bookmark: Bookmark) => {
@@ -547,7 +551,16 @@ export function BookmarkManager() {
             deleteCollectionMutation.mutate(collectionId);
           }
         }}
-        onSearch={() => setSearchOpen(true)}
+        onSearch={() => {
+          setSearchOpen(true);
+          // Focus the search input when search dialog opens
+          setTimeout(() => {
+            const searchInput = document.querySelector('[data-testid="input-search"]') as HTMLInputElement;
+            if (searchInput) {
+              searchInput.focus();
+            }
+          }, 100);
+        }}
         onSettings={() => setSettingsOpen(true)}
         currentWorkspaceId={currentWorkspaceId}
         isLoadingSpaces={isLoadingSpaces}
@@ -566,6 +579,7 @@ export function BookmarkManager() {
                 onClick={() => {
                   setSelectedSpace(undefined);
                   setSelectedCollection(undefined);
+                  setSearchQuery(""); // Clear search when going home
                 }}
                 className="hover:text-foreground transition-colors cursor-pointer hover:underline"
                 title="Go to All Bookmarks"
@@ -607,13 +621,27 @@ export function BookmarkManager() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search bookmarks, collections, tags..."
-                className="pl-10"
+                className="pl-10 pr-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 onFocus={() => setSearchOpen(true)}
                 data-testid="input-search"
               />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  title="Clear search"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
+            {searchQuery && (
+              <div className="text-xs text-muted-foreground mt-1">
+                Found {filteredBookmarks.length} result{filteredBookmarks.length !== 1 ? 's' : ''}
+              </div>
+            )}
           </div>
 
           {/* Actions */}
