@@ -118,9 +118,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Collections routes
   app.get("/api/collections", async (req, res) => {
     try {
-      const spaceId = req.query.spaceId as string || "default-space";
-      const collections = await storage.getCollections(spaceId);
-      res.json(collections);
+      const spaceId = req.query.spaceId as string;
+      const workspaceId = req.query.workspaceId as string;
+      
+      // If spaceId provided, get collections for that space
+      if (spaceId) {
+        const collections = await storage.getCollections(spaceId);
+        res.json(collections);
+      } 
+      // If workspaceId provided, get all collections for that workspace
+      else if (workspaceId) {
+        const collections = await storage.getAllCollections(workspaceId);
+        res.json(collections);
+      }
+      // Otherwise, get all collections (fallback)
+      else {
+        const collections = await storage.getAllCollections();
+        res.json(collections);
+      }
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch collections" });
     }

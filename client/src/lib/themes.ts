@@ -1,4 +1,4 @@
-import themeData from "@assets/themes_1756537767262.json";
+import themeData from "../assets/themes_1756537767262.json";
 
 export type OriginalTheme = {
   name: string;

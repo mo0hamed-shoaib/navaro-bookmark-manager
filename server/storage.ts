@@ -6,7 +6,8 @@ export interface IStorage {
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
-  getCollections(userId: string): Promise<Collection[]>;
+  getCollections(spaceId: string): Promise<Collection[]>;
+  getAllCollections(workspaceId?: string): Promise<Collection[]>;
   getCollection(id: string): Promise<Collection | undefined>;
   createCollection(collection: InsertCollection): Promise<Collection>;
   updateCollection(id: string, updates: Partial<InsertCollection>): Promise<Collection | undefined>;

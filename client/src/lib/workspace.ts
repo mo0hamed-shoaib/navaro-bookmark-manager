@@ -95,8 +95,8 @@ export class WorkspaceManager {
   }
 
   private generateWorkspaceId(): string {
-    // Generate a UUID for now (matches current database schema)
-    return crypto.randomUUID();
+    // Use default-workspace for new users to get sample data
+    return 'default-workspace';
   }
 
   getWorkspaceUrl(workspaceId: string): string {
@@ -116,6 +116,11 @@ export class WorkspaceManager {
     } catch (error) {
       console.warn('Failed to clear workspace from localStorage:', error);
     }
+  }
+
+  resetToDefaultWorkspace(): void {
+    this.currentWorkspaceId = 'default-workspace';
+    this.saveWorkspaceToStorage('default-workspace');
   }
 }
 

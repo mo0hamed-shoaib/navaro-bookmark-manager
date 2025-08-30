@@ -41,6 +41,8 @@
   --sidebar-accent-foreground: var(--primary);
   --sidebar-border: var(--border);
   --sidebar-ring: var(--ring);
+  --sidebar-width: 280px;
+  --sidebar-width-icon: 64px;
   
   --font-sans: Poppins, sans-serif;
   --font-serif: Poppins, serif;

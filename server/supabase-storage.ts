@@ -246,6 +246,34 @@ export class SupabaseStorage implements ISupabaseStorage {
     }
   }
 
+  async getAllCollections(workspaceId?: string): Promise<Collection[]> {
+    try {
+      // For now, just fetch all collections to get the counts working
+      const { data, error } = await supabase
+        .from('collections')
+        .select('*')
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+
+      // Transform Supabase data to match our schema
+      return data?.map(item => ({
+        id: item.id,
+        spaceId: item.space_id,
+        name: item.name,
+        description: item.description,
+        icon: item.icon,
+        orderIndex: item.order_index.toString(),
+        viewMode: item.view_mode,
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at),
+      })) || [];
+    } catch (error) {
+      console.error('Error fetching all collections:', error);
+      return [];
+    }
+  }
+
   async getCollection(id: string): Promise<Collection | undefined> {
     try {
       const { data, error } = await supabase

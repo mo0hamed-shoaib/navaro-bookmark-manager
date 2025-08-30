@@ -16,11 +16,9 @@ import {
   ExternalLink,
   Copy,
   Trash,
-  ChevronDown,
-  GripVertical,
-  FolderOpen,
-  Folder,
-  CheckSquare
+  ChevronRight,
+  CheckSquare,
+  Clock
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,8 +40,14 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme-provider";
 import { themes, themeNames } from "@/lib/themes";
 import { apiRequest } from "@/lib/queryClient";
-import type { Collection, Bookmark } from "@shared/schema";
+import type { Space, Collection, Bookmark } from "@shared/schema";
 import { workspaceManager } from "@/lib/workspace";
+import { BookmarkSidebar } from "@/components/bookmark-sidebar";
+import { AddSpaceDialog } from "@/components/add-space-dialog";
+import { AddCollectionDialog } from "@/components/add-collection-dialog";
+import { EditSpaceDialog } from "@/components/edit-space-dialog";
+import { EditCollectionDialog } from "@/components/edit-collection-dialog";
+import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 
 const bookmarkFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -58,11 +62,16 @@ const bookmarkFormSchema = z.object({
 type ViewMode = "grid" | "list" | "compact";
 
 export function BookmarkManager() {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchOpen, setSearchOpen] = useState(false);
   const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
+  const [addSpaceOpen, setAddSpaceOpen] = useState(false);
+  const [addCollectionOpen, setAddCollectionOpen] = useState(false);
+  const [editSpaceOpen, setEditSpaceOpen] = useState(false);
+  const [editCollectionOpen, setEditCollectionOpen] = useState(false);
+  const [selectedSpace, setSelectedSpace] = useState<string | undefined>();
   const [selectedCollection, setSelectedCollection] = useState<string | undefined>();
+  const [expandedSpaces, setExpandedSpaces] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; bookmark: Bookmark } | null>(null);
   const [selectedBookmarks, setSelectedBookmarks] = useState<Set<string>>(new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -77,9 +86,10 @@ export function BookmarkManager() {
   useEffect(() => {
     const initializeWorkspace = async () => {
       try {
+        // Reset to default workspace to get sample data
+        workspaceManager.resetToDefaultWorkspace();
         const workspaceId = await workspaceManager.getOrCreateWorkspace();
         setCurrentWorkspaceId(workspaceId);
-        console.log('Workspace initialized:', workspaceId);
       } catch (error) {
         console.error('Failed to initialize workspace:', error);
       }
@@ -88,8 +98,49 @@ export function BookmarkManager() {
     initializeWorkspace();
   }, []);
 
+  // Fetch spaces for the current workspace
+  const { data: spaces = [] } = useQuery<Space[]>({
+    queryKey: ["/api/spaces", currentWorkspaceId],
+    queryFn: async () => {
+      if (!currentWorkspaceId) return [];
+      const response = await fetch(`/api/spaces?workspaceId=${currentWorkspaceId}`);
+      if (!response.ok) throw new Error("Failed to fetch spaces");
+      return response.json();
+    },
+    enabled: !!currentWorkspaceId,
+  });
+
+  // Auto-select first space when spaces are loaded
+  useEffect(() => {
+    if (spaces.length > 0 && !selectedSpace) {
+      setSelectedSpace(spaces[0].id);
+      setExpandedSpaces(new Set([spaces[0].id]));
+    }
+  }, [spaces, selectedSpace]);
+
+  // Fetch all collections for the current workspace
   const { data: collections = [] } = useQuery<Collection[]>({
-    queryKey: ["/api/collections"],
+    queryKey: ["/api/collections", currentWorkspaceId],
+    queryFn: async () => {
+      if (!currentWorkspaceId || !spaces.length) return [];
+      
+      // Fetch collections for each space individually
+      const allCollections: Collection[] = [];
+      for (const space of spaces) {
+        try {
+          const response = await fetch(`/api/collections?spaceId=${space.id}`);
+          if (response.ok) {
+            const spaceCollections = await response.json();
+            allCollections.push(...spaceCollections);
+          }
+        } catch (error) {
+          console.error(`Error fetching collections for space ${space.id}:`, error);
+        }
+      }
+      
+      return allCollections;
+    },
+    enabled: !!currentWorkspaceId && spaces.length > 0,
   });
 
   // Get all bookmarks for sidebar counts
@@ -104,11 +155,15 @@ export function BookmarkManager() {
 
   // Get filtered bookmarks for current view
   const { data: bookmarks = [] } = useQuery<Bookmark[]>({
-    queryKey: ["/api/bookmarks", selectedCollection],
+    queryKey: ["/api/bookmarks", selectedSpace, selectedCollection],
     queryFn: async () => {
-      const url = selectedCollection 
-        ? `/api/bookmarks?collectionId=${selectedCollection}`
-        : "/api/bookmarks";
+      let url = "/api/bookmarks";
+      if (selectedCollection) {
+        url = `/api/bookmarks?collectionId=${selectedCollection}`;
+      } else if (selectedSpace) {
+        // If only space is selected, we'll filter client-side since the API doesn't support space filtering yet
+        url = "/api/bookmarks";
+      }
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch bookmarks");
       return response.json();
@@ -224,6 +279,78 @@ export function BookmarkManager() {
     },
   });
 
+  // Space and Collection mutations
+  const createSpaceMutation = useMutation({
+    mutationFn: async (data: { name: string; description?: string; icon: string }) => {
+      return apiRequest("POST", "/api/spaces", {
+        ...data,
+        workspaceId: currentWorkspaceId,
+        orderIndex: "0"
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+    },
+  });
+
+  const createCollectionMutation = useMutation({
+    mutationFn: async (data: { name: string; description?: string; icon: string; spaceId: string }) => {
+      return apiRequest("POST", "/api/collections", {
+        ...data,
+        orderIndex: "0",
+        viewMode: "card"
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+    },
+  });
+
+  // Update and Delete mutations
+  const updateSpaceMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name: string; description?: string; icon: string } }) => {
+      return apiRequest("PUT", `/api/spaces/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+      setEditSpaceOpen(false);
+    },
+  });
+
+  const deleteSpaceMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/spaces/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      setEditSpaceOpen(false);
+      setSelectedSpace(undefined);
+      setSelectedCollection(undefined);
+    },
+  });
+
+  const updateCollectionMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: { name: string; description?: string; icon: string } }) => {
+      return apiRequest("PUT", `/api/collections/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      setEditCollectionOpen(false);
+    },
+  });
+
+  const deleteCollectionMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/collections/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/collections"] });
+      setEditCollectionOpen(false);
+      setSelectedCollection(undefined);
+    },
+  });
+
   const form = useForm<z.infer<typeof bookmarkFormSchema>>({
     resolver: zodResolver(bookmarkFormSchema),
     defaultValues: {
@@ -238,6 +365,38 @@ export function BookmarkManager() {
   });
 
   const currentCollection = collections.find(c => c.id === selectedCollection);
+  const currentSpace = spaces.find(s => s.id === selectedSpace);
+
+  // Context-aware settings handler
+  const handleContextSettings = () => {
+    if (selectedCollection && currentCollection) {
+      // Edit collection
+      setEditCollectionOpen(true);
+    } else if (selectedSpace && currentSpace) {
+      // Edit space
+      setEditSpaceOpen(true);
+    } else {
+      // Global settings (fallback)
+      setSettingsOpen(true);
+    }
+  };
+
+  // Filter bookmarks based on selected space and collection
+  const filteredBookmarks = bookmarks.filter(bookmark => {
+    if (selectedCollection) {
+      // If a collection is selected, show only bookmarks in that collection
+      return bookmark.collectionId === selectedCollection;
+    } else if (selectedSpace) {
+      // If only a space is selected, show bookmarks from all collections in that space
+      const collectionIds = collections
+        .filter(c => c.spaceId === selectedSpace)
+        .map(c => c.id);
+      return collectionIds.includes(bookmark.collectionId);
+    } else {
+      // If nothing is selected, show all bookmarks
+      return true;
+    }
+  });
 
   const togglePin = (bookmark: Bookmark) => {
     updateBookmarkMutation.mutate({
@@ -255,6 +414,28 @@ export function BookmarkManager() {
     setContextMenu({ x: e.clientX, y: e.clientY, bookmark });
   };
 
+  const toggleSpaceExpansion = (spaceId: string) => {
+    setExpandedSpaces(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(spaceId)) {
+        newSet.delete(spaceId);
+      } else {
+        newSet.add(spaceId);
+      }
+      return newSet;
+    });
+  };
+
+  const isSpaceExpanded = (spaceId: string) => expandedSpaces.has(spaceId);
+
+  const handleSpaceClick = (spaceId: string) => {
+    // Toggle expansion when clicking the space
+    toggleSpaceExpansion(spaceId);
+    // Select the space
+    setSelectedSpace(spaceId);
+    setSelectedCollection(undefined);
+  };
+
   const toggleSelectBookmark = (id: string) => {
     const newSelected = new Set(selectedBookmarks);
     if (newSelected.has(id)) {
@@ -266,10 +447,10 @@ export function BookmarkManager() {
   };
 
   const selectAllBookmarks = () => {
-    if (selectedBookmarks.size === bookmarks.length) {
+    if (selectedBookmarks.size === filteredBookmarks.length) {
       setSelectedBookmarks(new Set());
     } else {
-      setSelectedBookmarks(new Set(bookmarks.map(b => b.id)));
+      setSelectedBookmarks(new Set(filteredBookmarks.map(b => b.id)));
     }
   };
 
@@ -306,294 +487,80 @@ export function BookmarkManager() {
   }, [editBookmarkOpen, editingBookmark, form]);
 
   return (
-    <div className="flex h-screen overflow-hidden bg-background text-foreground">
-      {/* Sidebar */}
-      <aside className={cn(
-        "bg-card border-r border-border flex flex-col transition-all duration-300 ease-in-out relative",
-        sidebarCollapsed ? "w-16" : "w-64"
-      )}>
-        {/* Sidebar Toggle Button - Always visible */}
-        <Button
-          variant="ghost"
-          size="sm"
-          className={cn(
-            "absolute top-4 z-10 h-8 w-8 p-0",
-            sidebarCollapsed ? "right-2" : "right-3"
-          )}
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          data-testid="sidebar-toggle"
-          title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        >
-          <GripVertical className="h-4 w-4" />
-        </Button>
+    <SidebarProvider>
+      <BookmarkSidebar
+        spaces={spaces}
+        collections={collections}
+        bookmarks={bookmarks}
+        allBookmarks={allBookmarks}
+        pinnedBookmarks={pinnedBookmarks}
+        recentBookmarks={recentBookmarks}
+        selectedSpace={selectedSpace}
+        selectedCollection={selectedCollection}
+        expandedSpaces={expandedSpaces}
+        onSpaceClick={handleSpaceClick}
+        onCollectionClick={setSelectedCollection}
+        onToggleSpaceExpansion={toggleSpaceExpansion}
+        onAddBookmark={() => setAddBookmarkOpen(true)}
+        onAddSpace={() => setAddSpaceOpen(true)}
+        onAddCollection={(spaceId) => {
+          // When adding collection from space context menu, pre-select that space
+          if (spaceId) {
+            setSelectedSpace(spaceId);
+          }
+          setAddCollectionOpen(true);
+        }}
+        onEditSpace={(spaceId) => {
+          setSelectedSpace(spaceId);
+          setEditSpaceOpen(true);
+        }}
+        onEditCollection={(collectionId) => {
+          setSelectedCollection(collectionId);
+          setEditCollectionOpen(true);
+        }}
+        onDeleteSpace={(spaceId) => {
+          if (confirm(`Are you sure you want to delete this space? This will also delete all collections and bookmarks within it.`)) {
+            deleteSpaceMutation.mutate(spaceId);
+          }
+        }}
+        onDeleteCollection={(collectionId) => {
+          if (confirm(`Are you sure you want to delete this collection? This will also delete all bookmarks within it.`)) {
+            deleteCollectionMutation.mutate(collectionId);
+          }
+        }}
+        onSearch={() => setSearchOpen(true)}
+        onSettings={() => setSettingsOpen(true)}
+        currentWorkspaceId={currentWorkspaceId}
+      />
 
-        {/* Sidebar Header */}
-        <div className="p-4 border-b border-border">
-          <div className="flex items-center">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <BookmarkIcon className="text-primary-foreground text-sm" />
-            </div>
-            {!sidebarCollapsed && (
-              <div className="ml-2">
-                <span className="font-semibold text-lg">Toby</span>
-                {currentWorkspaceId && (
-                  <div className="text-xs text-muted-foreground">
-                    Workspace: {currentWorkspaceId.substring(0, 8)}...
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Navigation */}
-        <div className="flex-1 overflow-y-auto p-2">
-          {/* Quick Actions */}
-          <div className="mb-4">
-            {!sidebarCollapsed && (
-              <div className="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Quick Actions
-              </div>
-            )}
-            <div className="space-y-1 mt-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => setAddBookmarkOpen(true)}
-                data-testid="button-add-bookmark"
-              >
-                <Plus className="h-4 w-4" />
-                {!sidebarCollapsed && <span className="ml-3">Add Bookmark</span>}
-              </Button>
-              <Button
-                variant="ghost"
-                className="w-full justify-start"
-                onClick={() => setSearchOpen(true)}
-                data-testid="button-search"
-              >
-                <Search className="h-4 w-4" />
-                {!sidebarCollapsed && <span className="ml-3">Search All</span>}
-              </Button>
-            </div>
-          </div>
-
-          {/* Pinned Items Widget */}
-          <Collapsible defaultOpen>
-            <div className="flex items-center justify-between px-2 py-1">
-              {!sidebarCollapsed && (
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Pinned
-                </div>
-              )}
-              <div className="flex items-center space-x-1">
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="p-1">
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </CollapsibleTrigger>
-              </div>
-            </div>
-            <CollapsibleContent className="space-y-1 mt-2">
-              {pinnedBookmarks.slice(0, 5).map((bookmark) => (
-                <Button
-                  key={bookmark.id}
-                  variant="ghost"
-                  className="w-full justify-start text-left h-auto py-2"
-                  onClick={() => window.open(bookmark.url, "_blank")}
-                  data-testid={`link-pinned-${bookmark.id}`}
-                >
-                  {bookmark.favicon && (
-                    <img src={bookmark.favicon} className="w-4 h-4 rounded flex-shrink-0" alt="" />
-                  )}
-                  {!sidebarCollapsed && (
-                    <span className="ml-3 text-sm truncate">{bookmark.title}</span>
-                  )}
-                </Button>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Recent Items Widget */}
-          <Collapsible defaultOpen className="mt-4">
-            <div className="flex items-center justify-between px-2 py-1">
-              {!sidebarCollapsed && (
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Recent
-                </div>
-              )}
-              <div className="flex items-center space-x-1">
-                <CollapsibleTrigger asChild>
-                  <Button variant="ghost" size="sm" className="p-1">
-                    <ChevronDown className="h-3 w-3" />
-                  </Button>
-                </CollapsibleTrigger>
-              </div>
-            </div>
-            <CollapsibleContent className="space-y-1 mt-2">
-              {recentBookmarks.slice(0, 5).map((bookmark) => (
-                <Button
-                  key={bookmark.id}
-                  variant="ghost"
-                  className="w-full justify-start text-left h-auto py-2"
-                  onClick={() => window.open(bookmark.url, "_blank")}
-                  data-testid={`link-recent-${bookmark.id}`}
-                >
-                  {bookmark.favicon && (
-                    <img src={bookmark.favicon} className="w-4 h-4 rounded flex-shrink-0" alt="" />
-                  )}
-                  {!sidebarCollapsed && (
-                    <span className="ml-3 text-sm text-muted-foreground truncate">{bookmark.title}</span>
-                  )}
-                </Button>
-              ))}
-            </CollapsibleContent>
-          </Collapsible>
-
-          {/* Collections */}
-          <div className="mt-4">
-            <div className="flex items-center justify-between px-2 py-1">
-              {!sidebarCollapsed && (
-                <div className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                  Collections
-                </div>
-              )}
-              <Button variant="ghost" size="sm" className="p-1">
-                <Plus className="h-3 w-3" />
-              </Button>
-            </div>
-            <div className="space-y-1 mt-2">
-              <Button
-                variant={selectedCollection === undefined ? "secondary" : "ghost"}
-                className="w-full justify-start"
-                onClick={() => setSelectedCollection(undefined)}
-                data-testid="button-all-bookmarks"
-              >
-                <span className="text-lg">📁</span>
-                {!sidebarCollapsed && <span className="ml-3 flex-1 text-left">All Bookmarks</span>}
-                {!sidebarCollapsed && (
-                  <span className="text-xs text-muted-foreground">{allBookmarks.length}</span>
-                )}
-              </Button>
-              {collections.map((collection) => (
-                <div key={collection.id} className="relative group">
-                  <Button
-                    variant={selectedCollection === collection.id ? "secondary" : "ghost"}
-                    className="w-full justify-start"
-                    onClick={() => setSelectedCollection(collection.id)}
-                    data-testid={`button-collection-${collection.id}`}
-                  >
-                    <span className="text-lg">{collection.icon || "📁"}</span>
-                    {!sidebarCollapsed && (
-                      <>
-                        <span className="ml-3 flex-1 text-left">{collection.name}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {allBookmarks.filter(b => b.collectionId === collection.id).length}
-                        </span>
-                      </>
-                    )}
-                  </Button>
-                  {!sidebarCollapsed && (
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-1 top-1/2 transform -translate-y-1/2 p-1 opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        // TODO: Open emoji picker for this collection
-                      }}
-                      data-testid={`button-edit-collection-${collection.id}`}
-                      title="Change Icon"
-                    >
-                      <Edit className="h-3 w-3" />
-                    </Button>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* User Profile */}
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center space-x-3">
-            <DropdownMenu open={profileMenuOpen} onOpenChange={setProfileMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  className="h-auto p-0 hover:bg-transparent"
-                  data-testid="button-profile-menu"
-                >
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&w=32&h=32&fit=crop&crop=face" />
-                    <AvatarFallback>JD</AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent 
-                align="start" 
-                className="w-56"
-                data-testid="menu-profile"
-              >
-                <div className="px-3 py-2">
-                  <div className="text-sm font-medium">Demo User</div>
-                  <div className="text-xs text-muted-foreground">demo@example.com</div>
-                </div>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem data-testid="menu-profile-edit">
-                  <User className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem 
-                  onClick={() => {
-                    setProfileMenuOpen(false);
-                    setSettingsOpen(true);
-                  }}
-                  data-testid="menu-profile-settings"
-                >
-                  <Settings className="h-4 w-4 mr-2" />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem data-testid="menu-profile-help">
-                  Help & Support
-                </DropdownMenuItem>
-                <DropdownMenuItem data-testid="menu-profile-logout">
-                  Sign Out
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-            {!sidebarCollapsed && (
-              <div className="flex-1">
-                <div className="text-sm font-medium">Demo User</div>
-                <div className="text-xs text-muted-foreground">demo@example.com</div>
-              </div>
-            )}
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              className="p-1"
-              onClick={() => setSettingsOpen(true)}
-              data-testid="button-settings-sidebar"
-              title="Settings"
-            >
-              <Settings className="h-4 w-4" />
-            </Button>
-          </div>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col overflow-hidden">
+      <SidebarInset>
         {/* Header */}
-        <header className="bg-background border-b border-border px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <div className="h-4 w-px bg-border" />
             {/* Breadcrumbs */}
             <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
               <span className="hover:text-foreground transition-colors cursor-pointer">Home</span>
-              <span>/</span>
-              <span className="text-foreground font-medium">
-                {currentCollection?.name || "All Bookmarks"}
-              </span>
+              {currentSpace && (
+                <>
+                  <span>/</span>
+                  <span className="hover:text-foreground transition-colors cursor-pointer">
+                    {currentSpace.name}
+                  </span>
+                </>
+              )}
+              {currentCollection && (
+                <>
+                  <span>/</span>
+                  <span className="text-foreground font-medium">
+                    {currentCollection.name}
+                  </span>
+                </>
+              )}
+              {!currentSpace && !currentCollection && (
+                <span className="text-foreground font-medium">All Bookmarks</span>
+              )}
             </nav>
           </div>
 
@@ -696,22 +663,22 @@ export function BookmarkManager() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h1 className="text-2xl font-semibold text-foreground">
-                  {currentCollection?.name || "All Bookmarks"}
+                  {currentCollection?.name || currentSpace?.name || "All Bookmarks"}
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  {currentCollection?.description || "All your bookmarks in one place"}
+                  {currentCollection?.description || currentSpace?.description || "All your bookmarks in one place"}
                 </p>
               </div>
               <div className="flex items-center space-x-2">
                 <span className="text-sm text-muted-foreground">
-                  {bookmarks.length} bookmarks
+                  {filteredBookmarks.length} bookmarks
                 </span>
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => setSettingsOpen(true)}
+                  onClick={handleContextSettings}
                   data-testid="button-collection-settings"
-                  title="Settings"
+                  title={selectedCollection ? "Edit Collection" : selectedSpace ? "Edit Space" : "Settings"}
                 >
                   <Settings className="h-4 w-4" />
                 </Button>
@@ -728,7 +695,7 @@ export function BookmarkManager() {
                   data-testid="button-select-all"
                 >
                   <CheckSquare className="h-4 w-4 mr-2" />
-                  {selectedBookmarks.size === bookmarks.length ? "Deselect All" : "Select All"}
+                  {selectedBookmarks.size === filteredBookmarks.length ? "Deselect All" : "Select All"}
                 </Button>
                 {selectedBookmarks.size > 0 && (
                   <div className="flex items-center space-x-2">
@@ -766,7 +733,7 @@ export function BookmarkManager() {
           </div>
 
           {/* Bookmark Grid */}
-          {bookmarks.length === 0 ? (
+          {filteredBookmarks.length === 0 ? (
             <div className="text-center py-12">
               <div className="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
                 <BookmarkIcon className="h-12 w-12 text-muted-foreground" />
@@ -784,7 +751,7 @@ export function BookmarkManager() {
               viewMode === "list" && "flex flex-col space-y-3",
               viewMode === "compact" && "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8"
             )}>
-              {bookmarks.map((bookmark) => (
+              {filteredBookmarks.map((bookmark) => (
                 <ContextMenu key={bookmark.id}>
                   <ContextMenuTrigger>
                     <Card 
@@ -1102,7 +1069,7 @@ export function BookmarkManager() {
             </div>
           )}
         </div>
-      </main>
+      </SidebarInset>
 
       {/* Search Dialog */}
       <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
@@ -1110,7 +1077,7 @@ export function BookmarkManager() {
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Bookmarks">
-            {bookmarks.slice(0, 5).map((bookmark) => (
+            {filteredBookmarks.slice(0, 5).map((bookmark) => (
               <CommandItem
                 key={bookmark.id}
                 onSelect={() => {
@@ -1524,8 +1491,45 @@ export function BookmarkManager() {
               </div>
             </div>
           </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+              </DialogContent>
+    </Dialog>
+
+    {/* Add Space Dialog */}
+    <AddSpaceDialog
+      open={addSpaceOpen}
+      onOpenChange={setAddSpaceOpen}
+      onSubmit={createSpaceMutation.mutate}
+      currentWorkspaceId={currentWorkspaceId}
+    />
+
+    {/* Add Collection Dialog */}
+    <AddCollectionDialog
+      open={addCollectionOpen}
+      onOpenChange={setAddCollectionOpen}
+      onSubmit={createCollectionMutation.mutate}
+      spaces={spaces}
+      selectedSpaceId={selectedSpace}
+    />
+
+    {/* Edit Space Dialog */}
+    <EditSpaceDialog
+      open={editSpaceOpen}
+      onOpenChange={setEditSpaceOpen}
+      onSubmit={(data) => updateSpaceMutation.mutate({ id: selectedSpace!, data })}
+      onDelete={() => deleteSpaceMutation.mutate(selectedSpace!)}
+      space={currentSpace}
+      isDeleting={deleteSpaceMutation.isPending}
+    />
+
+    {/* Edit Collection Dialog */}
+    <EditCollectionDialog
+      open={editCollectionOpen}
+      onOpenChange={setEditCollectionOpen}
+      onSubmit={(data) => updateCollectionMutation.mutate({ id: selectedCollection!, data })}
+      onDelete={() => deleteCollectionMutation.mutate(selectedCollection!)}
+      collection={currentCollection}
+      isDeleting={deleteCollectionMutation.isPending}
+    />
+  </SidebarProvider>
   );
 }
