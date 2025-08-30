@@ -1107,29 +1107,29 @@ export function BookmarkManager() {
           onValueChange={setSearchQuery}
         />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
-          <CommandGroup heading="Bookmarks">
-            {(() => {
-              // Use global search for dialog
-              if (searchQuery.trim()) {
-                console.log("Search query:", searchQuery);
-                console.log("All bookmarks count:", allBookmarks.length);
-                console.log("All bookmarks:", allBookmarks);
-                
-                const filtered = allBookmarks
-                  .filter(bookmark => {
-                    const query = searchQuery.toLowerCase();
-                    const matches = bookmark.title.toLowerCase().includes(query) ||
-                           bookmark.url.toLowerCase().includes(query) ||
-                           bookmark.description?.toLowerCase().includes(query) ||
-                           (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
-                    console.log(`Bookmark "${bookmark.title}" matches:`, matches);
-                    return matches;
-                  });
-                
-                console.log("Filtered results:", filtered);
-                return filtered.slice(0, 10)
-                  .map((bookmark) => (
+          {(() => {
+            // Use global search for dialog
+            if (searchQuery.trim()) {
+              const filtered = allBookmarks
+                .filter(bookmark => {
+                  const query = searchQuery.toLowerCase();
+                  const matches = bookmark.title.toLowerCase().includes(query) ||
+                         bookmark.url.toLowerCase().includes(query) ||
+                         bookmark.description?.toLowerCase().includes(query) ||
+                         (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
+                  console.log(`Bookmark "${bookmark.title}" matches:`, matches);
+                  return matches;
+                });
+              
+              console.log("Filtered results:", filtered);
+              
+              if (filtered.length === 0) {
+                return <CommandEmpty>No results found.</CommandEmpty>;
+              }
+              
+              return (
+                <CommandGroup heading="Bookmarks">
+                  {filtered.slice(0, 10).map((bookmark) => (
                     <div
                       key={bookmark.id}
                       className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
@@ -1146,11 +1146,12 @@ export function BookmarkManager() {
                       )}
                       <span>{bookmark.title}</span>
                     </div>
-                  ));
-              }
-              return [];
-            })()}
-          </CommandGroup>
+                  ))}
+                </CommandGroup>
+              );
+            }
+            return <CommandEmpty>Type to search...</CommandEmpty>;
+          })()}
         </CommandList>
       </CommandDialog>
 
