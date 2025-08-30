@@ -389,37 +389,21 @@ export function BookmarkManager() {
   };
 
   // Filter bookmarks based on selected space and collection
-  const filteredBookmarks = bookmarks.filter(bookmark => {
-    // Apply search filter if search query exists (GLOBAL SEARCH)
+  const filteredBookmarks = (() => {
+    // If searching, use allBookmarks for global search
     if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      const matchesSearch = 
-        bookmark.title.toLowerCase().includes(query) ||
-        bookmark.url.toLowerCase().includes(query) ||
-        bookmark.description?.toLowerCase().includes(query) ||
-        (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
-      
-      if (!matchesSearch) return false;
-      
-      // If searching, show ALL matching bookmarks regardless of space/collection
-      return true;
-    }
-
-    // Apply space/collection filtering only if no search query
-    if (selectedCollection) {
-      // If a collection is selected, show only bookmarks in that collection
-      return bookmark.collectionId === selectedCollection;
-    } else if (selectedSpace) {
-      // If only a space is selected, show bookmarks from all collections in that space
-      const collectionIds = collections
-        .filter(c => c.spaceId === selectedSpace)
-        .map(c => c.id);
-      return collectionIds.includes(bookmark.collectionId);
+      return allBookmarks.filter(bookmark => {
+        const query = searchQuery.toLowerCase();
+        return bookmark.title.toLowerCase().includes(query) ||
+               bookmark.url.toLowerCase().includes(query) ||
+               bookmark.description?.toLowerCase().includes(query) ||
+               (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
+      });
     }
     
-    // If nothing is selected, show all bookmarks
-    return true;
-  });
+    // If not searching, use the space/collection filtered bookmarks
+    return bookmarks;
+  })();
 
   const togglePin = (bookmark: Bookmark) => {
     updateBookmarkMutation.mutate({
