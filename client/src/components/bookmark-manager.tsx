@@ -390,21 +390,7 @@ export function BookmarkManager() {
   };
 
   // Filter bookmarks based on selected space and collection
-  const filteredBookmarks = (() => {
-    // If searching, use allBookmarks for global search
-    if (searchQuery.trim()) {
-      return allBookmarks.filter(bookmark => {
-        const query = searchQuery.toLowerCase();
-        return bookmark.title.toLowerCase().includes(query) ||
-               bookmark.url.toLowerCase().includes(query) ||
-               bookmark.description?.toLowerCase().includes(query) ||
-               (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
-      });
-    }
-    
-    // If not searching, use the space/collection filtered bookmarks
-    return bookmarks;
-  })();
+  const filteredBookmarks = bookmarks;
 
   const togglePin = (bookmark: Bookmark) => {
     updateBookmarkMutation.mutate({
@@ -543,14 +529,8 @@ export function BookmarkManager() {
           }
         }}
         onSearch={() => {
+          setSearchQuery(""); // Clear any existing search
           setSearchOpen(true);
-          // Focus the search input when search dialog opens
-          setTimeout(() => {
-            const searchInput = document.querySelector('[data-testid="input-search"]') as HTMLInputElement;
-            if (searchInput) {
-              searchInput.focus();
-            }
-          }, 100);
         }}
         onSettings={() => setSettingsOpen(true)}
         currentWorkspaceId={currentWorkspaceId}
@@ -608,26 +588,12 @@ export function BookmarkManager() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search bookmarks, collections, tags..."
-                className="pl-10 pr-8"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+                onClick={() => setSearchOpen(true)}
+                readOnly
                 data-testid="input-search"
               />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="absolute right-2 top-1/2 transform -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  title="Clear search"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              )}
             </div>
-            {searchQuery && (
-              <div className="text-xs text-muted-foreground mt-1">
-                Found {filteredBookmarks.length} result{filteredBookmarks.length !== 1 ? 's' : ''}
-              </div>
-            )}
           </div>
 
           {/* Actions */}
@@ -1124,7 +1090,15 @@ export function BookmarkManager() {
       </SidebarInset>
 
       {/* Search Dialog */}
-      <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
+      <CommandDialog 
+        open={searchOpen} 
+        onOpenChange={(open) => {
+          setSearchOpen(open);
+          if (!open) {
+            setSearchQuery(""); // Clear search when closing dialog
+          }
+        }}
+      >
         <CommandInput 
           placeholder="Search bookmarks, collections, tags..." 
           value={searchQuery}
@@ -1149,6 +1123,13 @@ export function BookmarkManager() {
                     <CommandItem
                       key={bookmark.id}
                       onSelect={() => {
+                        console.log("Search result clicked:", bookmark.title);
+                        window.open(bookmark.url, "_blank");
+                        setSearchOpen(false);
+                        setSearchQuery(""); // Clear search when selecting
+                      }}
+                      onClick={() => {
+                        console.log("Search result clicked (onClick):", bookmark.title);
                         window.open(bookmark.url, "_blank");
                         setSearchOpen(false);
                         setSearchQuery(""); // Clear search when selecting
