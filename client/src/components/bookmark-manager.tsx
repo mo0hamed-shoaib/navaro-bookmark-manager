@@ -74,6 +74,7 @@ export function BookmarkManager() {
   const [selectedSpace, setSelectedSpace] = useState<string | undefined>();
   const [selectedCollection, setSelectedCollection] = useState<string | undefined>();
   const [expandedSpaces, setExpandedSpaces] = useState<Set<string>>(new Set());
+  const [isAllBookmarksView, setIsAllBookmarksView] = useState(true);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; bookmark: Bookmark } | null>(null);
   const [selectedBookmarks, setSelectedBookmarks] = useState<Set<string>>(new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -116,11 +117,11 @@ export function BookmarkManager() {
 
   // Auto-select first space when spaces are loaded
   useEffect(() => {
-    if (spaces.length > 0 && !selectedSpace) {
+    if (spaces.length > 0 && !selectedSpace && !isAllBookmarksView) {
       setSelectedSpace(spaces[0].id);
       setExpandedSpaces(new Set([spaces[0].id]));
     }
-  }, [spaces, selectedSpace]);
+  }, [spaces, selectedSpace, isAllBookmarksView]);
 
   // Fetch all collections for the current workspace
   const { data: collections = [], isLoading: isLoadingCollections } = useQuery<Collection[]>({
@@ -425,16 +426,26 @@ export function BookmarkManager() {
   const isSpaceExpanded = (spaceId: string) => expandedSpaces.has(spaceId);
 
   const handleSpaceClick = (spaceId: string) => {
+    if (spaceId === "") {
+      // "All Bookmarks" clicked
+      setSelectedSpace(undefined);
+      setSelectedCollection(undefined);
+      setIsAllBookmarksView(true);
+      return;
+    }
+    
     // Toggle expansion when clicking the space
     toggleSpaceExpansion(spaceId);
     // Select the space
     setSelectedSpace(spaceId);
     setSelectedCollection(undefined);
+    setIsAllBookmarksView(false);
   };
 
   const handleHomeClick = () => {
     setSelectedSpace(undefined);
     setSelectedCollection(undefined);
+    setIsAllBookmarksView(true);
     setSearchQuery(""); // Clear search when going home
   };
 
@@ -499,9 +510,13 @@ export function BookmarkManager() {
         recentBookmarks={recentBookmarks}
         selectedSpace={selectedSpace}
         selectedCollection={selectedCollection}
+        isAllBookmarksView={isAllBookmarksView}
         expandedSpaces={expandedSpaces}
         onSpaceClick={handleSpaceClick}
-        onCollectionClick={setSelectedCollection}
+        onCollectionClick={(collectionId) => {
+          setSelectedCollection(collectionId);
+          setIsAllBookmarksView(false);
+        }}
         onToggleSpaceExpansion={toggleSpaceExpansion}
         onAddBookmark={() => setAddBookmarkOpen(true)}
         onAddSpace={() => setAddSpaceOpen(true)}
@@ -683,10 +698,10 @@ export function BookmarkManager() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h1 className="text-2xl font-semibold text-foreground">
-                  {currentCollection?.name || currentSpace?.name || "All Bookmarks"}
+                  {isAllBookmarksView ? "All Bookmarks" : currentCollection?.name || currentSpace?.name || "All Bookmarks"}
                 </h1>
                 <p className="text-muted-foreground mt-1">
-                  {currentCollection?.description || currentSpace?.description || "All your bookmarks in one place"}
+                  {isAllBookmarksView ? "All your bookmarks in one place" : currentCollection?.description || currentSpace?.description || "All your bookmarks in one place"}
                 </p>
               </div>
               <div className="flex items-center space-x-2">

@@ -48,6 +48,7 @@ interface BookmarkSidebarProps {
   recentBookmarks: Bookmark[]
   selectedSpace?: string
   selectedCollection?: string
+  isAllBookmarksView?: boolean
   expandedSpaces: Set<string>
   onSpaceClick: (spaceId: string) => void
   onCollectionClick: (collectionId: string) => void
@@ -75,6 +76,7 @@ export function BookmarkSidebar({
   recentBookmarks,
   selectedSpace,
   selectedCollection,
+  isAllBookmarksView = false,
   expandedSpaces,
   onSpaceClick,
   onCollectionClick,
@@ -219,6 +221,30 @@ export function BookmarkSidebar({
              </Collapsible>
            </SidebarMenu>
          </SidebarGroup>
+
+                                   {/* All Bookmarks */}
+          <SidebarGroup>
+            <SidebarGroupLabel>Collections</SidebarGroupLabel>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton 
+                  isActive={isAllBookmarksView}
+                  onClick={() => {
+                    // This will trigger the home click handler
+                    onSpaceClick(""); // Empty string to indicate "All Bookmarks"
+                  }}
+                  tooltip="All Bookmarks"
+                  className="cursor-pointer"
+                >
+                  <Home />
+                  <span>All Bookmarks</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {allBookmarks.length}
+                  </span>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
 
                                    {/* Spaces */}
           <SidebarGroup>
