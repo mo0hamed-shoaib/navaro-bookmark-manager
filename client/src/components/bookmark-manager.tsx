@@ -400,24 +400,24 @@ export function BookmarkManager() {
         (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
       
       if (!matchesSearch) return false;
+      
+      // If searching, show ALL matching bookmarks regardless of space/collection
+      return true;
     }
 
     // Apply space/collection filtering only if no search query
-    if (!searchQuery.trim()) {
-      if (selectedCollection) {
-        // If a collection is selected, show only bookmarks in that collection
-        return bookmark.collectionId === selectedCollection;
-      } else if (selectedSpace) {
-        // If only a space is selected, show bookmarks from all collections in that space
-        const collectionIds = collections
-          .filter(c => c.spaceId === selectedSpace)
-          .map(c => c.id);
-        return collectionIds.includes(bookmark.collectionId);
-      }
+    if (selectedCollection) {
+      // If a collection is selected, show only bookmarks in that collection
+      return bookmark.collectionId === selectedCollection;
+    } else if (selectedSpace) {
+      // If only a space is selected, show bookmarks from all collections in that space
+      const collectionIds = collections
+        .filter(c => c.spaceId === selectedSpace)
+        .map(c => c.id);
+      return collectionIds.includes(bookmark.collectionId);
     }
     
-    // If search query exists, show all matching bookmarks regardless of space/collection
-    // If no search query, show all bookmarks when nothing is selected
+    // If nothing is selected, show all bookmarks
     return true;
   });
 
@@ -457,6 +457,12 @@ export function BookmarkManager() {
     // Select the space
     setSelectedSpace(spaceId);
     setSelectedCollection(undefined);
+  };
+
+  const handleHomeClick = () => {
+    setSelectedSpace(undefined);
+    setSelectedCollection(undefined);
+    setSearchQuery(""); // Clear search when going home
   };
 
   const toggleSelectBookmark = (id: string) => {
@@ -576,11 +582,7 @@ export function BookmarkManager() {
             {/* Breadcrumbs */}
             <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
               <button 
-                onClick={() => {
-                  setSelectedSpace(undefined);
-                  setSelectedCollection(undefined);
-                  setSearchQuery(""); // Clear search when going home
-                }}
+                onClick={handleHomeClick}
                 className="hover:text-foreground transition-colors cursor-pointer hover:underline"
                 title="Go to All Bookmarks"
               >
