@@ -1120,16 +1120,11 @@ export function BookmarkManager() {
                   })
                   .slice(0, 10)
                   .map((bookmark) => (
-                    <CommandItem
+                    <div
                       key={bookmark.id}
-                      onSelect={() => {
-                        console.log("Search result clicked:", bookmark.title);
-                        window.open(bookmark.url, "_blank");
-                        setSearchOpen(false);
-                        setSearchQuery(""); // Clear search when selecting
-                      }}
+                      className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
                       onClick={() => {
-                        console.log("Search result clicked (onClick):", bookmark.title);
+                        console.log("Search result clicked:", bookmark.title);
                         window.open(bookmark.url, "_blank");
                         setSearchOpen(false);
                         setSearchQuery(""); // Clear search when selecting
@@ -1140,7 +1135,7 @@ export function BookmarkManager() {
                         <img src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
                       )}
                       <span>{bookmark.title}</span>
-                    </CommandItem>
+                    </div>
                   ));
               }
               return [];
