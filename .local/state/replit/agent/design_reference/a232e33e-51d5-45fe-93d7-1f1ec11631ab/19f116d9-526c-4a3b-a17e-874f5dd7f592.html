@@ -1,0 +1,907 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toby - Bookmark & Workspace Manager</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    borderRadius: {
+                        lg: "var(--radius)",
+                        md: "calc(var(--radius) - 2px)",
+                        sm: "calc(var(--radius) - 4px)",
+                    },
+                    colors: {
+                        background: "var(--background)",
+                        foreground: "var(--foreground)",
+                        card: {
+                            DEFAULT: "var(--card)",
+                            foreground: "var(--card-foreground)",
+                        },
+                        popover: {
+                            DEFAULT: "var(--popover)",
+                            foreground: "var(--popover-foreground)",
+                        },
+                        primary: {
+                            DEFAULT: "var(--primary)",
+                            foreground: "var(--primary-foreground)",
+                            hover: "var(--primary-hover)",
+                        },
+                        secondary: {
+                            DEFAULT: "var(--secondary)",
+                            foreground: "var(--secondary-foreground)",
+                            hover: "var(--secondary-hover)",
+                        },
+                        muted: {
+                            DEFAULT: "var(--muted)",
+                            foreground: "var(--muted-foreground)",
+                        },
+                        accent: {
+                            DEFAULT: "var(--accent)",
+                            foreground: "var(--accent-foreground)",
+                        },
+                        destructive: {
+                            DEFAULT: "var(--destructive)",
+                            foreground: "var(--destructive-foreground)",
+                        },
+                        border: "var(--border)",
+                        input: "var(--input)",
+                        ring: "var(--ring)",
+                        link: "var(--link)",
+                    },
+                    fontFamily: {
+                        sans: ["Inter", "sans-serif"],
+                    }
+                },
+            }
+        };
+    </script>
+    <style>
+        :root {
+            --radius: 0.5rem;
+        }
+        
+        /* Default theme - Nomad */
+        :root[data-theme="nomad"] {
+            --background: hsl(0 0% 99%);
+            --foreground: hsl(0 0% 10%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(0 0% 10%);
+            --popover: hsl(0 0% 96%);
+            --popover-foreground: hsl(0 0% 10%);
+            --muted: hsl(0 0% 90%);
+            --muted-foreground: hsl(0 0% 33%);
+            --primary: hsl(244 88% 60%);
+            --primary-foreground: hsl(0 0% 100%);
+            --primary-hover: hsl(244 88% 55%);
+            --secondary: hsl(160 84% 39%);
+            --secondary-foreground: hsl(0 0% 100%);
+            --secondary-hover: hsl(160 84% 34%);
+            --accent: hsl(38 92% 50%);
+            --accent-foreground: hsl(0 0% 10%);
+            --destructive: hsl(0 84% 60%);
+            --destructive-foreground: hsl(0 0% 100%);
+            --border: hsl(220 13% 91%);
+            --input: hsl(220 13% 82%);
+            --ring: hsl(244 88% 60%);
+            --link: hsl(221 83% 53%);
+        }
+
+        :root[data-theme="quadratic"] {
+            --background: hsl(222 84% 5%);
+            --foreground: hsl(210 40% 98%);
+            --card: hsl(222 84% 11%);
+            --card-foreground: hsl(210 40% 98%);
+            --popover: hsl(220 15% 11%);
+            --popover-foreground: hsl(210 40% 98%);
+            --muted: hsl(215 28% 20%);
+            --muted-foreground: hsl(218 11% 83%);
+            --primary: hsl(217 91% 60%);
+            --primary-foreground: hsl(0 0% 100%);
+            --primary-hover: hsl(221 83% 53%);
+            --secondary: hsl(263 70% 64%);
+            --secondary-foreground: hsl(0 0% 100%);
+            --secondary-hover: hsl(263 70% 59%);
+            --accent: hsl(25 95% 53%);
+            --accent-foreground: hsl(0 0% 100%);
+            --destructive: hsl(0 84% 60%);
+            --destructive-foreground: hsl(0 0% 100%);
+            --border: hsl(215 28% 20%);
+            --input: hsl(215 20% 29%);
+            --ring: hsl(217 91% 60%);
+            --link: hsl(214 95% 69%);
+        }
+
+        :root[data-theme="honey"] {
+            --background: hsl(33 100% 97%);
+            --foreground: hsl(0 0% 10%);
+            --card: hsl(48 100% 96%);
+            --card-foreground: hsl(0 0% 10%);
+            --popover: hsl(48 96% 89%);
+            --popover-foreground: hsl(0 0% 10%);
+            --muted: hsl(48 96% 81%);
+            --muted-foreground: hsl(32 36% 24%);
+            --primary: hsl(38 92% 50%);
+            --primary-foreground: hsl(0 0% 10%);
+            --primary-hover: hsl(32 95% 44%);
+            --secondary: hsl(43 96% 56%);
+            --secondary-foreground: hsl(0 0% 10%);
+            --secondary-hover: hsl(38 92% 50%);
+            --accent: hsl(2 73% 66%);
+            --accent-foreground: hsl(0 0% 10%);
+            --destructive: hsl(0 78% 49%);
+            --destructive-foreground: hsl(0 0% 100%);
+            --border: hsl(45 93% 69%);
+            --input: hsl(54 92% 62%);
+            --ring: hsl(38 92% 50%);
+            --link: hsl(32 95% 44%);
+        }
+
+        :root[data-theme="forest"] {
+            --background: hsl(120 60% 97%);
+            --foreground: hsl(164 100% 9%);
+            --card: hsl(0 0% 100%);
+            --card-foreground: hsl(164 100% 9%);
+            --popover: hsl(138 76% 92%);
+            --popover-foreground: hsl(164 100% 9%);
+            --muted: hsl(142 69% 81%);
+            --muted-foreground: hsl(162 72% 22%);
+            --primary: hsl(142 76% 36%);
+            --primary-foreground: hsl(0 0% 100%);
+            --primary-hover: hsl(142 76% 31%);
+            --secondary: hsl(142 71% 45%);
+            --secondary-foreground: hsl(0 0% 100%);
+            --secondary-hover: hsl(142 76% 36%);
+            --accent: hsl(83 78% 35%);
+            --accent-foreground: hsl(0 0% 100%);
+            --destructive: hsl(0 72% 51%);
+            --destructive-foreground: hsl(0 0% 100%);
+            --border: hsl(141 56% 74%);
+            --input: hsl(141 64% 60%);
+            --ring: hsl(142 76% 36%);
+            --link: hsl(161 94% 20%);
+        }
+
+        :root[data-theme="midnight"] {
+            --background: hsl(0 0% 5%);
+            --foreground: hsl(0 0% 96%);
+            --card: hsl(0 0% 10%);
+            --card-foreground: hsl(0 0% 96%);
+            --popover: hsl(0 0% 15%);
+            --popover-foreground: hsl(0 0% 96%);
+            --muted: hsl(0 0% 25%);
+            --muted-foreground: hsl(0 0% 64%);
+            --primary: hsl(221 83% 53%);
+            --primary-foreground: hsl(0 0% 100%);
+            --primary-hover: hsl(224 76% 48%);
+            --secondary: hsl(271 81% 56%);
+            --secondary-foreground: hsl(0 0% 100%);
+            --secondary-hover: hsl(271 81% 51%);
+            --accent: hsl(343 75% 61%);
+            --accent-foreground: hsl(0 0% 100%);
+            --destructive: hsl(0 78% 49%);
+            --destructive-foreground: hsl(0 0% 100%);
+            --border: hsl(0 0% 15%);
+            --input: hsl(0 0% 20%);
+            --ring: hsl(221 83% 53%);
+            --link: hsl(217 91% 60%);
+        }
+
+        .sidebar-collapsed {
+            width: 4rem;
+        }
+
+        .sidebar-expanded {
+            width: 16rem;
+        }
+
+        .bookmark-card {
+            transition: all 0.2s ease-in-out;
+        }
+
+        .bookmark-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .context-menu {
+            position: absolute;
+            z-index: 50;
+            min-width: 8rem;
+            overflow: hidden;
+            border-radius: calc(var(--radius) - 2px);
+            border: 1px solid var(--border);
+            background: var(--popover);
+            color: var(--popover-foreground);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            animation: fadeIn 0.15s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .drag-handle {
+            cursor: grab;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        .collection-item {
+            transition: background-color 0.15s ease;
+        }
+
+        .collection-item:hover {
+            background-color: var(--muted);
+        }
+
+        .view-mode-grid .bookmark-grid {
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        }
+
+        .view-mode-list .bookmark-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .view-mode-compact .bookmark-grid {
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+        }
+    </style>
+</head>
+<body class="bg-background text-foreground font-sans antialiased" data-theme="nomad">
+    <div class="flex h-screen overflow-hidden">
+        <!-- @COMPONENT: Sidebar [collapsible, draggable collections and widgets] -->
+        <aside id="sidebar" class="sidebar-expanded bg-card border-r border-border flex flex-col transition-all duration-300 ease-in-out">
+            <!-- Sidebar Header -->
+            <div class="p-4 border-b border-border">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <div class="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
+                            <i class="fas fa-bookmark text-primary-foreground text-sm"></i>
+                        </div>
+                        <span class="font-semibold text-lg sidebar-text">Toby</span>
+                    </div>
+                    <button id="sidebar-toggle" class="p-1 hover:bg-muted rounded-md transition-colors">
+                        <i class="fas fa-bars text-muted-foreground"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="flex-1 overflow-y-auto p-2">
+                <!-- Quick Actions -->
+                <div class="mb-4">
+                    <div class="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide sidebar-text">Quick Actions</div>
+                    <div class="space-y-1 mt-2">
+                        <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-muted transition-colors group">
+                            <i class="fas fa-plus text-muted-foreground group-hover:text-foreground"></i>
+                            <span class="sidebar-text">Add Bookmark</span>
+                        </a>
+                        <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-muted transition-colors group">
+                            <i class="fas fa-search text-muted-foreground group-hover:text-foreground"></i>
+                            <span class="sidebar-text">Search All</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Pinned Items Widget -->
+                <div class="mb-4" data-mock="true">
+                    <div class="flex items-center justify-between px-2 py-1">
+                        <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide sidebar-text">Pinned</div>
+                        <div class="flex items-center space-x-1">
+                            <button class="p-1 hover:bg-muted rounded">
+                                <i class="fas fa-chevron-down text-xs text-muted-foreground"></i>
+                            </button>
+                            <div class="drag-handle p-1 hover:bg-muted rounded">
+                                <i class="fas fa-grip-vertical text-xs text-muted-foreground"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-1 mt-2">
+                        <!-- A minimalist dashboard interface with clean lines and modern typography -->
+                        <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-muted transition-colors group">
+                            <img src="https://images.unsplash.com/photo-1551650975-87deedd944c3?ixlib=rb-4.0.3&w=16&h=16&fit=crop" class="w-4 h-4 rounded" alt="Linear" />
+                            <span class="sidebar-text text-sm">Linear Dashboard</span>
+                        </a>
+                        <!-- A modern e-commerce website with shopping cart and product displays -->
+                        <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-muted transition-colors group">
+                            <img src="https://images.unsplash.com/photo-1563013544-824ae1b704d3?ixlib=rb-4.0.3&w=16&h=16&fit=crop" class="w-4 h-4 rounded" alt="Shopify" />
+                            <span class="sidebar-text text-sm">Shopify Store</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Recent Items Widget -->
+                <div class="mb-4" data-mock="true">
+                    <div class="flex items-center justify-between px-2 py-1">
+                        <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide sidebar-text">Recent</div>
+                        <div class="flex items-center space-x-1">
+                            <button class="p-1 hover:bg-muted rounded">
+                                <i class="fas fa-chevron-down text-xs text-muted-foreground"></i>
+                            </button>
+                            <div class="drag-handle p-1 hover:bg-muted rounded">
+                                <i class="fas fa-grip-vertical text-xs text-muted-foreground"></i>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-1 mt-2">
+                        <!-- A collaborative workspace with team members working on shared documents -->
+                        <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-muted transition-colors group">
+                            <img src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?ixlib=rb-4.0.3&w=16&h=16&fit=crop" class="w-4 h-4 rounded" alt="Notion" />
+                            <span class="sidebar-text text-sm text-muted-foreground">Notion Workspace</span>
+                        </a>
+                        <!-- A code repository interface with version control and collaborative features -->
+                        <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-md hover:bg-muted transition-colors group">
+                            <img src="https://images.unsplash.com/photo-1556075798-4825dfaaf498?ixlib=rb-4.0.3&w=16&h=16&fit=crop" class="w-4 h-4 rounded" alt="GitHub" />
+                            <span class="sidebar-text text-sm text-muted-foreground">GitHub Repo</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Collections -->
+                <div class="mb-4">
+                    <div class="flex items-center justify-between px-2 py-1">
+                        <div class="text-xs font-medium text-muted-foreground uppercase tracking-wide sidebar-text">Collections</div>
+                        <button class="p-1 hover:bg-muted rounded">
+                            <i class="fas fa-plus text-xs text-muted-foreground"></i>
+                        </button>
+                    </div>
+                    <div class="space-y-1 mt-2" data-mock="true">
+                        <!-- @MAP: collections.map(collection => ( -->
+                        <div class="collection-item flex items-center space-x-2 px-3 py-2 rounded-md cursor-pointer group" data-bind="collection.name">
+                            <div class="drag-handle">
+                                <i class="fas fa-grip-vertical text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </div>
+                            <i class="fas fa-folder text-muted-foreground group-hover:text-foreground transition-colors"></i>
+                            <span class="sidebar-text flex-1">Work Tools</span>
+                            <span class="text-xs text-muted-foreground" data-bind="collection.bookmarkCount">12</span>
+                        </div>
+                        <div class="collection-item flex items-center space-x-2 px-3 py-2 rounded-md cursor-pointer group bg-muted">
+                            <div class="drag-handle">
+                                <i class="fas fa-grip-vertical text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </div>
+                            <i class="fas fa-folder-open text-primary transition-colors"></i>
+                            <span class="sidebar-text flex-1 font-medium">Design Resources</span>
+                            <span class="text-xs text-muted-foreground">8</span>
+                        </div>
+                        <div class="collection-item flex items-center space-x-2 px-3 py-2 rounded-md cursor-pointer group">
+                            <div class="drag-handle">
+                                <i class="fas fa-grip-vertical text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </div>
+                            <i class="fas fa-folder text-muted-foreground group-hover:text-foreground transition-colors"></i>
+                            <span class="sidebar-text flex-1">Learning</span>
+                            <span class="text-xs text-muted-foreground">15</span>
+                        </div>
+                        <div class="collection-item flex items-center space-x-2 px-3 py-2 rounded-md cursor-pointer group">
+                            <div class="drag-handle">
+                                <i class="fas fa-grip-vertical text-xs text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"></i>
+                            </div>
+                            <i class="fas fa-folder text-muted-foreground group-hover:text-foreground transition-colors"></i>
+                            <span class="sidebar-text flex-1">Shopping</span>
+                            <span class="text-xs text-muted-foreground">5</span>
+                        </div>
+                        <!-- @END_MAP )) -->
+                    </div>
+                </div>
+
+                <!-- Tags -->
+                <div class="mb-4">
+                    <div class="px-2 py-1 text-xs font-medium text-muted-foreground uppercase tracking-wide sidebar-text">Tags</div>
+                    <div class="flex flex-wrap gap-1 mt-2 px-2" data-mock="true">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary border border-primary/20">productivity</span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary/10 text-secondary border border-secondary/20">design</span>
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-accent/10 text-accent border border-accent/20">tools</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- User Profile -->
+            <div class="p-4 border-t border-border">
+                <div class="flex items-center space-x-3" data-mock="true">
+                    <!-- A professional headshot of a person in business attire with a confident smile -->
+                    <img src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&w=32&h=32&fit=crop&crop=face" alt="User Avatar" class="w-8 h-8 rounded-full" />
+                    <div class="flex-1 sidebar-text">
+                        <div class="text-sm font-medium" data-bind="user.name">John Doe</div>
+                        <div class="text-xs text-muted-foreground" data-bind="user.email">john@example.com</div>
+                    </div>
+                    <button class="p-1 hover:bg-muted rounded">
+                        <i class="fas fa-cog text-muted-foreground"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <!-- @COMPONENT: Header [breadcrumbs, search, actions, theme switcher] -->
+            <header class="bg-background border-b border-border px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <!-- Breadcrumbs -->
+                    <nav class="flex items-center space-x-2 text-sm text-muted-foreground">
+                        <a href="#" class="hover:text-foreground transition-colors">Home</a>
+                        <i class="fas fa-chevron-right text-xs"></i>
+                        <span class="text-foreground font-medium" data-bind="currentCollection.name">Design Resources</span>
+                    </nav>
+                </div>
+
+                <!-- Search Bar -->
+                <div class="flex-1 max-w-md mx-8">
+                    <div class="relative">
+                        <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground text-sm"></i>
+                        <input type="text" placeholder="Search bookmarks, collections, tags..." class="w-full pl-10 pr-4 py-2 bg-background border border-input rounded-md focus:ring-2 focus:ring-ring focus:border-transparent transition-colors text-sm" data-implementation="Use Command component for advanced search" />
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center space-x-3">
+                    <!-- View Mode Toggle -->
+                    <div class="flex items-center bg-muted rounded-md p-1">
+                        <button class="p-2 rounded hover:bg-background transition-colors bg-background shadow-sm" data-event="click:setViewMode('grid')" title="Grid View">
+                            <i class="fas fa-th text-sm"></i>
+                        </button>
+                        <button class="p-2 rounded hover:bg-background transition-colors" data-event="click:setViewMode('list')" title="List View">
+                            <i class="fas fa-list text-sm"></i>
+                        </button>
+                        <button class="p-2 rounded hover:bg-background transition-colors" data-event="click:setViewMode('compact')" title="Compact View">
+                            <i class="fas fa-th-large text-sm"></i>
+                        </button>
+                    </div>
+
+                    <!-- Add Bookmark -->
+                    <button class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary-hover transition-colors flex items-center space-x-2" data-event="click:openAddBookmarkModal">
+                        <i class="fas fa-plus text-sm"></i>
+                        <span>Add Bookmark</span>
+                    </button>
+
+                    <!-- Theme Switcher -->
+                    <div class="relative">
+                        <button id="theme-toggle" class="p-2 hover:bg-muted rounded-md transition-colors" title="Switch Theme">
+                            <i class="fas fa-palette text-muted-foreground"></i>
+                        </button>
+                        <div id="theme-menu" class="context-menu hidden" style="top: 100%; right: 0; margin-top: 8px;">
+                            <div class="py-1">
+                                <button data-theme="nomad" class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-gradient-to-r from-blue-500 to-green-500"></div>
+                                    <span>Nomad</span>
+                                </button>
+                                <button data-theme="quadratic" class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-gradient-to-r from-blue-600 to-purple-600"></div>
+                                    <span>Quadratic</span>
+                                </button>
+                                <button data-theme="honey" class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500"></div>
+                                    <span>Honey</span>
+                                </button>
+                                <button data-theme="forest" class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-gradient-to-r from-green-400 to-green-600"></div>
+                                    <span>Forest</span>
+                                </button>
+                                <button data-theme="midnight" class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2">
+                                    <div class="w-3 h-3 rounded-full bg-gradient-to-r from-gray-900 to-blue-900"></div>
+                                    <span>Midnight</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Menu -->
+                    <button class="p-2 hover:bg-muted rounded-md transition-colors">
+                        <i class="fas fa-user text-muted-foreground"></i>
+                    </button>
+                </div>
+            </header>
+            <!-- @END_COMPONENT: Header -->
+
+            <!-- @COMPONENT: BookmarkGrid [responsive grid with different view modes] -->
+            <div class="flex-1 overflow-y-auto p-6 view-mode-grid">
+                <!-- Collection Header -->
+                <div class="mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h1 class="text-2xl font-semibold text-foreground" data-bind="currentCollection.name">Design Resources</h1>
+                            <p class="text-muted-foreground mt-1" data-bind="currentCollection.description">A curated collection of design tools, inspiration, and resources</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-sm text-muted-foreground">8 bookmarks</span>
+                            <button class="text-muted-foreground hover:text-foreground transition-colors" title="Collection Settings">
+                                <i class="fas fa-cog"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Bar -->
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <button class="text-sm text-primary hover:text-primary-hover transition-colors flex items-center space-x-2" data-event="click:selectAll">
+                                <i class="fas fa-check-square"></i>
+                                <span>Select All</span>
+                            </button>
+                            <div class="hidden" id="bulk-actions">
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm text-muted-foreground">2 selected</span>
+                                    <button class="bg-secondary text-secondary-foreground px-3 py-1 rounded text-sm hover:bg-secondary-hover transition-colors">Move</button>
+                                    <button class="bg-destructive text-destructive-foreground px-3 py-1 rounded text-sm hover:bg-destructive/90 transition-colors">Delete</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <select class="bg-background border border-input rounded px-3 py-1 text-sm focus:ring-2 focus:ring-ring">
+                                <option>Sort by Date Added</option>
+                                <option>Sort by Name</option>
+                                <option>Sort by Most Visited</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bookmark Grid -->
+                <div class="bookmark-grid grid gap-4" data-mock="true">
+                    <!-- @MAP: bookmarks.map(bookmark => ( -->
+                    <!-- A modern design tool interface with color palettes and typography samples -->
+                    <div class="bookmark-card bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group" data-bind="bookmark.id" data-event="contextmenu:showContextMenu">
+                        <div class="flex items-start space-x-3">
+                            <img src="https://images.unsplash.com/photo-1558655146-9f40138edfeb?ixlib=rb-4.0.3&w=48&h=48&fit=crop" alt="Figma" class="w-12 h-12 rounded-lg flex-shrink-0" />
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-medium text-foreground truncate group-hover:text-primary transition-colors" data-bind="bookmark.title">Figma - Design Tool</h3>
+                                <p class="text-sm text-muted-foreground mt-1 line-clamp-2" data-bind="bookmark.description">Collaborative interface design tool with real-time collaboration</p>
+                                <div class="flex items-center space-x-2 mt-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary border border-primary/20">design</span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary/10 text-secondary border border-secondary/20">tools</span>
+                                </div>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-xs text-muted-foreground" data-bind="bookmark.url">figma.com</span>
+                                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="p-1 hover:bg-muted rounded" title="Pin">
+                                            <i class="fas fa-thumbtack text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="Edit">
+                                            <i class="fas fa-edit text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="More">
+                                            <i class="fas fa-ellipsis-h text-xs text-muted-foreground"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- A color palette and gradient generator interface with vibrant swatches -->
+                    <div class="bookmark-card bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group">
+                        <div class="flex items-start space-x-3">
+                            <img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&w=48&h=48&fit=crop" alt="Coolors" class="w-12 h-12 rounded-lg flex-shrink-0" />
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-medium text-foreground truncate group-hover:text-primary transition-colors">Coolors - Color Palette Generator</h3>
+                                <p class="text-sm text-muted-foreground mt-1 line-clamp-2">Create beautiful color palettes and gradients for your designs</p>
+                                <div class="flex items-center space-x-2 mt-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-accent/10 text-accent border border-accent/20">colors</span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary border border-primary/20">design</span>
+                                </div>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-xs text-muted-foreground">coolors.co</span>
+                                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="p-1 hover:bg-muted rounded" title="Pin">
+                                            <i class="fas fa-thumbtack text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="Edit">
+                                            <i class="fas fa-edit text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="More">
+                                            <i class="fas fa-ellipsis-h text-xs text-muted-foreground"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- A typography showcase with various fonts and text layouts -->
+                    <div class="bookmark-card bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group">
+                        <div class="flex items-start space-x-3">
+                            <img src="https://images.unsplash.com/photo-1586953208448-b95a79798f07?ixlib=rb-4.0.3&w=48&h=48&fit=crop" alt="Google Fonts" class="w-12 h-12 rounded-lg flex-shrink-0" />
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-medium text-foreground truncate group-hover:text-primary transition-colors">Google Fonts</h3>
+                                <p class="text-sm text-muted-foreground mt-1 line-clamp-2">Browse and use free web fonts for your projects</p>
+                                <div class="flex items-center space-x-2 mt-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary/10 text-secondary border border-secondary/20">fonts</span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-accent/10 text-accent border border-accent/20">typography</span>
+                                </div>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-xs text-muted-foreground">fonts.google.com</span>
+                                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="p-1 hover:bg-muted rounded" title="Pin">
+                                            <i class="fas fa-thumbtack text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="Edit">
+                                            <i class="fas fa-edit text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="More">
+                                            <i class="fas fa-ellipsis-h text-xs text-muted-foreground"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- A digital illustration and icon design workspace with vector graphics -->
+                    <div class="bookmark-card bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group">
+                        <div class="flex items-start space-x-3">
+                            <img src="https://images.unsplash.com/photo-1572044162444-ad60f128bdea?ixlib=rb-4.0.3&w=48&h=48&fit=crop" alt="Unsplash" class="w-12 h-12 rounded-lg flex-shrink-0" />
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-medium text-foreground truncate group-hover:text-primary transition-colors">Unsplash - Free Photos</h3>
+                                <p class="text-sm text-muted-foreground mt-1 line-clamp-2">High-quality free stock photos for your creative projects</p>
+                                <div class="flex items-center space-x-2 mt-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary border border-primary/20">photos</span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary/10 text-secondary border border-secondary/20">stock</span>
+                                </div>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-xs text-muted-foreground">unsplash.com</span>
+                                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="p-1 hover:bg-muted rounded" title="Pin">
+                                            <i class="fas fa-thumbtack text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="Edit">
+                                            <i class="fas fa-edit text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="More">
+                                            <i class="fas fa-ellipsis-h text-xs text-muted-foreground"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- A wireframing and prototyping tool interface with mockup screens -->
+                    <div class="bookmark-card bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group">
+                        <div class="flex items-start space-x-3">
+                            <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&w=48&h=48&fit=crop" alt="Dribbble" class="w-12 h-12 rounded-lg flex-shrink-0" />
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-medium text-foreground truncate group-hover:text-primary transition-colors">Dribbble - Design Inspiration</h3>
+                                <p class="text-sm text-muted-foreground mt-1 line-clamp-2">Discover creative work and connect with designers worldwide</p>
+                                <div class="flex items-center space-x-2 mt-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-accent/10 text-accent border border-accent/20">inspiration</span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary border border-primary/20">design</span>
+                                </div>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-xs text-muted-foreground">dribbble.com</span>
+                                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="p-1 hover:bg-muted rounded" title="Pin">
+                                            <i class="fas fa-thumbtack text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="Edit">
+                                            <i class="fas fa-edit text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="More">
+                                            <i class="fas fa-ellipsis-h text-xs text-muted-foreground"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- A modern code editor interface with syntax highlighting and plugins -->
+                    <div class="bookmark-card bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group">
+                        <div class="flex items-start space-x-3">
+                            <img src="https://images.unsplash.com/photo-1555066931-4365d14bab8c?ixlib=rb-4.0.3&w=48&h=48&fit=crop" alt="Adobe XD" class="w-12 h-12 rounded-lg flex-shrink-0" />
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-medium text-foreground truncate group-hover:text-primary transition-colors">Adobe XD - UX Design</h3>
+                                <p class="text-sm text-muted-foreground mt-1 line-clamp-2">Design and prototype user experiences for web and mobile</p>
+                                <div class="flex items-center space-x-2 mt-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary border border-primary/20">ux</span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary/10 text-secondary border border-secondary/20">prototyping</span>
+                                </div>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-xs text-muted-foreground">adobe.com/products/xd</span>
+                                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="p-1 hover:bg-muted rounded" title="Pin">
+                                            <i class="fas fa-thumbtack text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="Edit">
+                                            <i class="fas fa-edit text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="More">
+                                            <i class="fas fa-ellipsis-h text-xs text-muted-foreground"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- A creative workspace with design assets and brand guidelines -->
+                    <div class="bookmark-card bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group">
+                        <div class="flex items-start space-x-3">
+                            <img src="https://images.unsplash.com/photo-1581291518857-4e27b48ff24e?ixlib=rb-4.0.3&w=48&h=48&fit=crop" alt="Sketch" class="w-12 h-12 rounded-lg flex-shrink-0" />
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-medium text-foreground truncate group-hover:text-primary transition-colors">Sketch - Digital Design</h3>
+                                <p class="text-sm text-muted-foreground mt-1 line-clamp-2">Professional digital design toolkit for UI/UX designers</p>
+                                <div class="flex items-center space-x-2 mt-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-accent/10 text-accent border border-accent/20">ui</span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-primary/10 text-primary border border-primary/20">design</span>
+                                </div>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-xs text-muted-foreground">sketch.com</span>
+                                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="p-1 hover:bg-muted rounded" title="Pin">
+                                            <i class="fas fa-thumbtack text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="Edit">
+                                            <i class="fas fa-edit text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="More">
+                                            <i class="fas fa-ellipsis-h text-xs text-muted-foreground"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- A brand identity design workspace with logos and visual elements -->
+                    <div class="bookmark-card bg-card border border-border rounded-lg p-4 hover:shadow-lg transition-all cursor-pointer group">
+                        <div class="flex items-start space-x-3">
+                            <img src="https://images.unsplash.com/photo-1611224923853-80b023f02d71?ixlib=rb-4.0.3&w=48&h=48&fit=crop" alt="Canva" class="w-12 h-12 rounded-lg flex-shrink-0" />
+                            <div class="flex-1 min-w-0">
+                                <h3 class="font-medium text-foreground truncate group-hover:text-primary transition-colors">Canva - Graphic Design</h3>
+                                <p class="text-sm text-muted-foreground mt-1 line-clamp-2">Easy-to-use design platform with templates and tools</p>
+                                <div class="flex items-center space-x-2 mt-3">
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-secondary/10 text-secondary border border-secondary/20">graphics</span>
+                                    <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-accent/10 text-accent border border-accent/20">templates</span>
+                                </div>
+                                <div class="flex items-center justify-between mt-3">
+                                    <span class="text-xs text-muted-foreground">canva.com</span>
+                                    <div class="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button class="p-1 hover:bg-muted rounded" title="Pin">
+                                            <i class="fas fa-thumbtack text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="Edit">
+                                            <i class="fas fa-edit text-xs text-muted-foreground"></i>
+                                        </button>
+                                        <button class="p-1 hover:bg-muted rounded" title="More">
+                                            <i class="fas fa-ellipsis-h text-xs text-muted-foreground"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- @END_MAP )) -->
+                </div>
+
+                <!-- Empty State (hidden when bookmarks exist) -->
+                <div class="hidden text-center py-12">
+                    <div class="w-24 h-24 bg-muted rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-bookmark text-3xl text-muted-foreground"></i>
+                    </div>
+                    <h3 class="text-lg font-medium text-foreground mb-2">No bookmarks yet</h3>
+                    <p class="text-muted-foreground mb-4">Start building your collection by adding your first bookmark</p>
+                    <button class="bg-primary text-primary-foreground px-4 py-2 rounded-md hover:bg-primary-hover transition-colors">
+                        Add Your First Bookmark
+                    </button>
+                </div>
+            </div>
+            <!-- @END_COMPONENT: BookmarkGrid -->
+        </main>
+
+        <!-- Context Menu (hidden by default) -->
+        <div id="context-menu" class="context-menu hidden">
+            <div class="py-1">
+                <button class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2">
+                    <i class="fas fa-external-link-alt text-xs"></i>
+                    <span>Open</span>
+                </button>
+                <button class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2">
+                    <i class="fas fa-external-link-alt text-xs"></i>
+                    <span>Open in New Tab</span>
+                </button>
+                <div class="border-t border-border my-1"></div>
+                <button class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2">
+                    <i class="fas fa-thumbtack text-xs"></i>
+                    <span>Pin to Top</span>
+                </button>
+                <button class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2">
+                    <i class="fas fa-edit text-xs"></i>
+                    <span>Edit</span>
+                </button>
+                <button class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2">
+                    <i class="fas fa-copy text-xs"></i>
+                    <span>Copy Link</span>
+                </button>
+                <div class="border-t border-border my-1"></div>
+                <button class="w-full text-left px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center space-x-2 text-destructive">
+                    <i class="fas fa-trash text-xs"></i>
+                    <span>Delete</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Theme Management
+            const themeToggle = document.getElementById('theme-toggle');
+            const themeMenu = document.getElementById('theme-menu');
+            const themeButtons = document.querySelectorAll('[data-theme]');
+            
+            // Load saved theme or default to nomad
+            const savedTheme = localStorage.getItem('toby-theme') || 'nomad';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            
+            themeToggle.addEventListener('click', function(e) {
+                e.stopPropagation();
+                themeMenu.classList.toggle('hidden');
+            });
+            
+            themeButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const theme = this.getAttribute('data-theme');
+                    document.documentElement.setAttribute('data-theme', theme);
+                    localStorage.setItem('toby-theme', theme);
+                    themeMenu.classList.add('hidden');
+                });
+            });
+            
+            // Sidebar Toggle
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.getElementById('sidebar');
+            const sidebarTexts = document.querySelectorAll('.sidebar-text');
+            
+            sidebarToggle.addEventListener('click', function() {
+                const isCollapsed = sidebar.classList.contains('sidebar-collapsed');
+                
+                if (isCollapsed) {
+                    sidebar.classList.remove('sidebar-collapsed');
+                    sidebar.classList.add('sidebar-expanded');
+                    sidebarTexts.forEach(text => text.style.display = '');
+                } else {
+                    sidebar.classList.remove('sidebar-expanded');
+                    sidebar.classList.add('sidebar-collapsed');
+                    sidebarTexts.forEach(text => text.style.display = 'none');
+                }
+            });
+            
+            // Context Menu
+            const contextMenu = document.getElementById('context-menu');
+            const bookmarkCards = document.querySelectorAll('.bookmark-card');
+            
+            bookmarkCards.forEach(card => {
+                card.addEventListener('contextmenu', function(e) {
+                    e.preventDefault();
+                    contextMenu.style.left = e.pageX + 'px';
+                    contextMenu.style.top = e.pageY + 'px';
+                    contextMenu.classList.remove('hidden');
+                });
+            });
+            
+            // Close context menu and theme menu when clicking outside
+            document.addEventListener('click', function() {
+                contextMenu.classList.add('hidden');
+                themeMenu.classList.add('hidden');
+            });
+            
+            // View Mode Toggle (placeholder functionality)
+            // TODO: Implement view mode switching logic
+            
+            // Search functionality (placeholder)
+            // TODO: Implement search with Command component
+            
+            // Drag and Drop (placeholder)
+            // TODO: Implement drag and drop for collections and widgets
+            
+            // Bulk Actions (placeholder)
+            // TODO: Implement checkbox selection and bulk operations
+        })();
+    </script>
+</body>
+</html>
