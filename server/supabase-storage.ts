@@ -1,7 +1,11 @@
 import { supabase } from './supabase';
-import type { User, InsertUser, Collection, InsertCollection, Bookmark, InsertBookmark } from '@shared/schema';
+import type { User, InsertUser, Collection, InsertCollection, Bookmark, InsertBookmark, Workspace } from '@shared/schema';
 
 export interface ISupabaseStorage {
+  // Workspace operations
+  getWorkspace(id: string): Promise<Workspace | undefined>;
+  createWorkspace(id: string): Promise<Workspace>;
+
   // User operations (for compatibility with existing interface)
   getUser(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
@@ -29,6 +33,25 @@ export class SupabaseStorage implements ISupabaseStorage {
   // For now, we'll use a demo user ID to maintain compatibility
   private demoUserId = "demo-user-1";
 
+  // Workspace operations (simplified for now)
+  async getWorkspace(id: string): Promise<Workspace | undefined> {
+    // For now, return a mock workspace to get the system working
+    return {
+      id: id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
+  async createWorkspace(id: string): Promise<Workspace> {
+    // For now, return a mock workspace to get the system working
+    return {
+      id: id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    };
+  }
+
   // User operations (simplified for demo)
   async getUser(id: string): Promise<User | undefined> {
     if (id === this.demoUserId) {
@@ -53,7 +76,11 @@ export class SupabaseStorage implements ISupabaseStorage {
 
   async createUser(user: InsertUser): Promise<User> {
     // For demo purposes, just return the demo user
-    return this.getUser(this.demoUserId)!;
+    const demoUser = await this.getUser(this.demoUserId);
+    if (!demoUser) {
+      throw new Error('Demo user not found');
+    }
+    return demoUser;
   }
 
   // Collection operations
@@ -115,7 +142,7 @@ export class SupabaseStorage implements ISupabaseStorage {
           name: collection.name,
           description: collection.description,
           icon: collection.icon,
-          order_index: parseInt(collection.order),
+          order_index: parseInt(collection.order || '0'),
           space_id: '00000000-0000-0000-0000-000000000000', // Default space for now
         })
         .select()
