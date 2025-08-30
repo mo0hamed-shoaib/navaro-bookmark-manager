@@ -62,6 +62,8 @@ interface BookmarkSidebarProps {
   onSearch: () => void
   onSettings: () => void
   currentWorkspaceId?: string | null
+  isLoadingSpaces?: boolean
+  isLoadingCollections?: boolean
 }
 
 export function BookmarkSidebar({
@@ -87,6 +89,8 @@ export function BookmarkSidebar({
   onSearch,
   onSettings,
   currentWorkspaceId,
+  isLoadingSpaces = false,
+  isLoadingCollections = false,
 }: BookmarkSidebarProps) {
 
   const isSpaceExpanded = (spaceId: string) => expandedSpaces.has(spaceId)
@@ -163,9 +167,8 @@ export function BookmarkSidebar({
                          <SidebarMenuSubButton
                            asChild
                            onClick={() => window.open(bookmark.url, "_blank")}
-                           tooltip={bookmark.title}
                          >
-                           <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                           <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer" title={bookmark.title}>
                              {bookmark.favicon && (
                                <img src={bookmark.favicon} className="w-4 h-4 rounded flex-shrink-0" alt="" />
                              )}
@@ -200,9 +203,8 @@ export function BookmarkSidebar({
                          <SidebarMenuSubButton
                            asChild
                            onClick={() => window.open(bookmark.url, "_blank")}
-                           tooltip={bookmark.title}
                          >
-                           <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer">
+                           <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer" title={bookmark.title}>
                              {bookmark.favicon && (
                                <img src={bookmark.favicon} className="w-4 h-4 rounded flex-shrink-0" alt="" />
                              )}
@@ -218,10 +220,15 @@ export function BookmarkSidebar({
            </SidebarMenu>
          </SidebarGroup>
 
-                 {/* Spaces */}
-         <SidebarGroup>
-           <SidebarGroupLabel>Spaces</SidebarGroupLabel>
-           <SidebarMenu>
+                                   {/* Spaces */}
+          <SidebarGroup>
+            <SidebarGroupLabel>Spaces</SidebarGroupLabel>
+            <SidebarMenu>
+              {isLoadingSpaces && (
+                <div className="px-2 py-1">
+                  <div className="h-8 bg-muted animate-pulse rounded-md"></div>
+                </div>
+              )}
              <SidebarMenuItem>
                <SidebarMenuButton onClick={onAddSpace} tooltip="Add Space" className="cursor-pointer">
                  <Plus />
@@ -271,6 +278,12 @@ export function BookmarkSidebar({
                    </ContextMenu>
                                                          <CollapsibleContent>
                       <SidebarMenuSub>
+                        {isLoadingCollections && (
+                          <div className="px-2 py-1">
+                            <div className="h-6 bg-muted animate-pulse rounded-md mb-1"></div>
+                            <div className="h-6 bg-muted animate-pulse rounded-md"></div>
+                          </div>
+                        )}
                         {collections
                           .filter(c => c.spaceId === space.id)
                           .map((collection) => (

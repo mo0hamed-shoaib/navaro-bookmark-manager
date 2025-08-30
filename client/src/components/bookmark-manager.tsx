@@ -64,6 +64,7 @@ type ViewMode = "grid" | "list" | "compact";
 export function BookmarkManager() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
   const [addSpaceOpen, setAddSpaceOpen] = useState(false);
   const [addCollectionOpen, setAddCollectionOpen] = useState(false);
@@ -99,7 +100,7 @@ export function BookmarkManager() {
   }, []);
 
   // Fetch spaces for the current workspace
-  const { data: spaces = [] } = useQuery<Space[]>({
+  const { data: spaces = [], isLoading: isLoadingSpaces } = useQuery<Space[]>({
     queryKey: ["/api/spaces", currentWorkspaceId],
     queryFn: async () => {
       if (!currentWorkspaceId) return [];
@@ -108,6 +109,8 @@ export function BookmarkManager() {
       return response.json();
     },
     enabled: !!currentWorkspaceId,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    cacheTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Auto-select first space when spaces are loaded
@@ -119,7 +122,7 @@ export function BookmarkManager() {
   }, [spaces, selectedSpace]);
 
   // Fetch all collections for the current workspace
-  const { data: collections = [] } = useQuery<Collection[]>({
+  const { data: collections = [], isLoading: isLoadingCollections } = useQuery<Collection[]>({
     queryKey: ["/api/collections", currentWorkspaceId],
     queryFn: async () => {
       if (!currentWorkspaceId || !spaces.length) return [];
@@ -141,9 +144,11 @@ export function BookmarkManager() {
       return allCollections;
     },
     enabled: !!currentWorkspaceId && spaces.length > 0,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    cacheTime: 5 * 60 * 1000, // 5 minutes
   });
 
-  // Get all bookmarks for sidebar counts
+  // Get all bookmarks for sidebar counts (optimized with caching)
   const { data: allBookmarks = [] } = useQuery<Bookmark[]>({
     queryKey: ["/api/bookmarks"],
     queryFn: async () => {
@@ -151,6 +156,8 @@ export function BookmarkManager() {
       if (!response.ok) throw new Error("Failed to fetch bookmarks");
       return response.json();
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 
   // Get filtered bookmarks for current view
@@ -383,6 +390,18 @@ export function BookmarkManager() {
 
   // Filter bookmarks based on selected space and collection
   const filteredBookmarks = bookmarks.filter(bookmark => {
+    // Apply search filter if search query exists
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        bookmark.title.toLowerCase().includes(query) ||
+        bookmark.url.toLowerCase().includes(query) ||
+        bookmark.description?.toLowerCase().includes(query) ||
+        bookmark.tags?.some(tag => tag.toLowerCase().includes(query));
+      
+      if (!matchesSearch) return false;
+    }
+
     if (selectedCollection) {
       // If a collection is selected, show only bookmarks in that collection
       return bookmark.collectionId === selectedCollection;
@@ -531,6 +550,8 @@ export function BookmarkManager() {
         onSearch={() => setSearchOpen(true)}
         onSettings={() => setSettingsOpen(true)}
         currentWorkspaceId={currentWorkspaceId}
+        isLoadingSpaces={isLoadingSpaces}
+        isLoadingCollections={isLoadingCollections}
       />
 
       <SidebarInset>
@@ -541,13 +562,29 @@ export function BookmarkManager() {
             <div className="h-4 w-px bg-border" />
             {/* Breadcrumbs */}
             <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
-              <span className="hover:text-foreground transition-colors cursor-pointer">Home</span>
+              <button 
+                onClick={() => {
+                  setSelectedSpace(undefined);
+                  setSelectedCollection(undefined);
+                }}
+                className="hover:text-foreground transition-colors cursor-pointer hover:underline"
+                title="Go to All Bookmarks"
+              >
+                Home
+              </button>
               {currentSpace && (
                 <>
                   <span>/</span>
-                  <span className="hover:text-foreground transition-colors cursor-pointer">
+                  <button 
+                    onClick={() => {
+                      setSelectedSpace(currentSpace.id);
+                      setSelectedCollection(undefined);
+                    }}
+                    className="hover:text-foreground transition-colors cursor-pointer hover:underline"
+                    title={`Go to ${currentSpace.name}`}
+                  >
                     {currentSpace.name}
-                  </span>
+                  </button>
                 </>
               )}
               {currentCollection && (
@@ -571,8 +608,9 @@ export function BookmarkManager() {
               <Input
                 placeholder="Search bookmarks, collections, tags..."
                 className="pl-10"
-                onClick={() => setSearchOpen(true)}
-                readOnly
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onFocus={() => setSearchOpen(true)}
                 data-testid="input-search"
               />
             </div>
