@@ -464,24 +464,27 @@ export function BookmarkManager() {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                {themeNames.map((themeName) => (
-                  <DropdownMenuItem
-                    key={themeName}
-                    onClick={() => setTheme(themeName)}
-                    className="flex items-center space-x-2"
-                    data-testid={`button-theme-${themeName}`}
-                  >
-                    <div className={cn(
-                      "w-3 h-3 rounded-full",
-                      themeName === "nomad" && "bg-gradient-to-r from-blue-500 to-green-500",
-                      themeName === "quadratic" && "bg-gradient-to-r from-blue-600 to-purple-600",
-                      themeName === "honey" && "bg-gradient-to-r from-yellow-400 to-orange-500",
-                      themeName === "forest" && "bg-gradient-to-r from-green-400 to-green-600",
-                      themeName === "midnight" && "bg-gradient-to-r from-gray-900 to-blue-900"
-                    )} />
-                    <span className="capitalize">{themeName}</span>
-                  </DropdownMenuItem>
-                ))}
+                {themeNames.map((themeName) => {
+                  const themeDisplayName = themes[themeName]?.name || themeName;
+                  return (
+                    <DropdownMenuItem
+                      key={themeName}
+                      onClick={() => setTheme(themeName)}
+                      className="flex items-center space-x-2"
+                      data-testid={`button-theme-${themeName}`}
+                    >
+                      <div className={cn(
+                        "w-3 h-3 rounded-full",
+                        themeName === "highlighter" && "bg-gradient-to-r from-green-400 to-purple-400",
+                        themeName === "zen-garden" && "bg-gradient-to-r from-green-300 to-purple-300",
+                        themeName === "honey" && "bg-gradient-to-r from-yellow-400 to-orange-500",
+                        themeName === "nomad" && "bg-gradient-to-r from-red-500 to-gray-400",
+                        themeName === "quadratic" && "bg-gradient-to-r from-gray-900 to-white"
+                      )} />
+                      <span>{themeDisplayName}</span>
+                    </DropdownMenuItem>
+                  );
+                })}
               </DropdownMenuContent>
             </DropdownMenu>
 

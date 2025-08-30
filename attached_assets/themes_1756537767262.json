@@ -1,0 +1,229 @@
+{
+  "Themes": [
+    {
+      "name": "Highlighter",
+      "Colors": {
+        "Background color": "#ffffff",
+        "Text color": "#000000",
+        "Muted background color": "#f5f5f5",
+        "Muted text color": "#878787"
+      },
+      "Typography": {
+        "Sans-serif font": "Space Grotesk",
+        "Serif font": "Geist",
+        "Monospace font": "Geist Mono"
+      },
+      "Shape & Spacing": { "Border radius": "0rem" },
+      "Components": {
+        "Actions": {
+          "Primary background": "#b0f582",
+          "Primary text": "#000000",
+          "Secondary background": "#000000",
+          "Secondary text": "#ffffff",
+          "Accent background": "#e2d9ff",
+          "Accent text": "#000000",
+          "Destructive background": "#e65853",
+          "Destructive text": "#ffffff"
+        },
+        "Forms": {
+          "Input": "#000000",
+          "Border": "#f6f6f6",
+          "Focus Border": "#000000"
+        },
+        "Containers": {
+          "Card background": "#f6f6f6",
+          "Card text": "#000000",
+          "Popover background": "#ffffff",
+          "Popover text": "#000000"
+        },
+        "Charts": {
+          "Chart 1": "#1e9df1",
+          "Chart 2": "#00b87a",
+          "Chart 3": "#f7b928",
+          "Chart 4": "#17bf63",
+          "Chart 5": "#e0245e"
+        }
+      }
+    },
+    {
+      "name": "Zen Garden",
+      "Colors": {
+        "Background color": "#e9ebe0",
+        "Text color": "#151515",
+        "Muted background color": "#dbddd3",
+        "Muted text color": "#6a6b66"
+      },
+      "Typography": {
+        "Sans-serif font": "Inter",
+        "Serif font": "Source Serif Pro",
+        "Monospace font": "IBM Plex Mono"
+      },
+      "Shape & Spacing": { "Border radius": "0.875rem" },
+      "Components": {
+        "Actions": {
+          "Primary background": "#91bfb4",
+          "Primary text": "#151515",
+          "Secondary background": "#151515",
+          "Secondary text": "#e9ebe0",
+          "Accent background": "#d6a1de",
+          "Accent text": "#151515",
+          "Destructive background": "#cb5150",
+          "Destructive text": "#ffffff"
+        },
+        "Forms": {
+          "Input": "#bdb6ac",
+          "Border": "#ccc7c0",
+          "Focus Border": "#509485"
+        },
+        "Containers": {
+          "Card background": "#f7f8f8",
+          "Card text": "#0f1419",
+          "Popover background": "#ffffff",
+          "Popover text": "#0f1419"
+        },
+        "Charts": {
+          "Chart 1": "#1e9df1",
+          "Chart 2": "#00b87a",
+          "Chart 3": "#f7b928",
+          "Chart 4": "#17bf63",
+          "Chart 5": "#e0245e"
+        }
+      }
+    },
+    {
+      "name": "Honey",
+      "Colors": {
+        "Background color": "#fffbef",
+        "Text color": "#5f471d",
+        "Muted background color": "#f7eede",
+        "Muted text color": "#5f471d"
+      },
+      "Typography": {
+        "Sans-serif font": "Lora",
+        "Serif font": "Geist",
+        "Monospace font": "Space Grotesk"
+      },
+      "Shape & Spacing": { "Border radius": "0.875rem" },
+      "Components": {
+        "Actions": {
+          "Primary background": "#f7ce86",
+          "Primary text": "#5b4824",
+          "Secondary background": "#5b4824",
+          "Secondary text": "#f9dea9",
+          "Accent background": "#e6ecd3",
+          "Accent text": "#636e59",
+          "Destructive background": "#cb5150",
+          "Destructive text": "#ffffff"
+        },
+        "Forms": {
+          "Input": "#e5e0d2",
+          "Border": "#e5e0d2",
+          "Focus Border": "#5b4824"
+        },
+        "Containers": {
+          "Card background": "#fefbf0",
+          "Card text": "#0f1419",
+          "Popover background": "#ffffff",
+          "Popover text": "#0f1419"
+        },
+        "Charts": {
+          "Chart 1": "#1e9df1",
+          "Chart 2": "#00b87a",
+          "Chart 3": "#f7b928",
+          "Chart 4": "#17bf63",
+          "Chart 5": "#e0245e"
+        }
+      }
+    },
+    {
+      "name": "Nomad",
+      "Colors": {
+        "Background color": "#f0f0f0",
+        "Text color": "#1a1a1a",
+        "Muted background color": "#e3e3e3",
+        "Muted text color": "#212121"
+      },
+      "Typography": {
+        "Sans-serif font": "Poppins",
+        "Serif font": "Poppins",
+        "Monospace font": "Menlo"
+      },
+      "Shape & Spacing": { "Border radius": "0.8rem" },
+      "Components": {
+        "Actions": {
+          "Primary background": "#eb1a4e",
+          "Primary text": "#ffffff",
+          "Secondary background": "#c4c4c4",
+          "Secondary text": "#1a1a1a",
+          "Accent background": "#ffffff",
+          "Accent text": "#1a1a1a",
+          "Destructive background": "#000000",
+          "Destructive text": "#ffffff"
+        },
+        "Forms": {
+          "Input": "#b5b5b5",
+          "Border": "#e8e8e8",
+          "Focus Border": "#6b6b6b"
+        },
+        "Containers": {
+          "Card background": "#fcfcfc",
+          "Card text": "#000000",
+          "Popover background": "#f9f8f5",
+          "Popover text": "#ffffff"
+        },
+        "Charts": {
+          "Chart 1": "#1e9df1",
+          "Chart 2": "#00b87a",
+          "Chart 3": "#f7b928",
+          "Chart 4": "#17bf63",
+          "Chart 5": "#e0245e"
+        }
+      }
+    },
+    {
+      "name": "Quadratic",
+      "Colors": {
+        "Background color": "#090909",
+        "Text color": "#ebebeb",
+        "Muted background color": "#404040",
+        "Muted text color": "#ababab"
+      },
+      "Typography": {
+        "Sans-serif font": "Inter",
+        "Serif font": "Inter",
+        "Monospace font": "Menlo"
+      },
+      "Shape & Spacing": { "Border radius": "0.4rem" },
+      "Components": {
+        "Actions": {
+          "Primary background": "#f5f5f5",
+          "Primary text": "#0d0d0d",
+          "Secondary background": "#ebebeb",
+          "Secondary text": "#0d0d0d",
+          "Accent background": "#ebebeb",
+          "Accent text": "#000000",
+          "Destructive background": "#f4212e",
+          "Destructive text": "#ffffff"
+        },
+        "Forms": {
+          "Input": "#2b2b2b",
+          "Border": "#2b2b2b",
+          "Focus Border": "#4c5363"
+        },
+        "Containers": {
+          "Card background": "#101011",
+          "Card text": "#ffffff",
+          "Popover background": "#f9f8f5",
+          "Popover text": "#ffffff"
+        },
+        "Charts": {
+          "Chart 1": "#1e9df1",
+          "Chart 2": "#00b87a",
+          "Chart 3": "#f7b928",
+          "Chart 4": "#17bf63",
+          "Chart 5": "#e0245e"
+        }
+      }
+    }
+  ]
+}
