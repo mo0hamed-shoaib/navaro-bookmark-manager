@@ -17,6 +17,7 @@ import {
   Target,
   Edit,
   Trash,
+  Share,
   type LucideIcon,
 } from "lucide-react"
 
@@ -62,6 +63,7 @@ interface BookmarkSidebarProps {
   onDeleteCollection: (collectionId: string) => void
   onSearch: () => void
   onSessions: () => void
+  onShares: () => void
   onSettings: () => void
   currentWorkspaceId?: string | null
   isLoadingSpaces?: boolean
@@ -91,6 +93,7 @@ export function BookmarkSidebar({
   onDeleteCollection,
   onSearch,
   onSessions,
+  onShares,
   onSettings,
   currentWorkspaceId,
   isLoadingSpaces = false,
@@ -153,6 +156,12 @@ export function BookmarkSidebar({
                               <SidebarMenuButton onClick={onSessions} tooltip="Saved Sessions" className="cursor-pointer">
                  <Clock />
                  <span>Saved Sessions</span>
+               </SidebarMenuButton>
+             </SidebarMenuItem>
+             <SidebarMenuItem>
+                              <SidebarMenuButton onClick={onShares} tooltip="Share Workspace" className="cursor-pointer">
+                 <Share />
+                 <span>Share</span>
                </SidebarMenuButton>
              </SidebarMenuItem>
           </SidebarMenu>

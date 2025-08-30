@@ -79,6 +79,17 @@ export const sessionTabs = pgTable("session_tabs", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Sharing table for view-only links
+export const shares = pgTable("shares", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  viewKey: text("view_key").notNull().unique(),
+  name: text("name"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  expiresAt: timestamp("expires_at"),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -132,6 +143,14 @@ export const insertSessionTabSchema = createInsertSchema(sessionTabs).pick({
   orderIndex: true,
 });
 
+export const insertShareSchema = createInsertSchema(shares).pick({
+  workspaceId: true,
+  viewKey: true,
+  name: true,
+  description: true,
+  expiresAt: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -152,3 +171,6 @@ export type Session = typeof sessions.$inferSelect;
 
 export type InsertSessionTab = z.infer<typeof insertSessionTabSchema>;
 export type SessionTab = typeof sessionTabs.$inferSelect;
+
+export type InsertShare = z.infer<typeof insertShareSchema>;
+export type Share = typeof shares.$inferSelect;

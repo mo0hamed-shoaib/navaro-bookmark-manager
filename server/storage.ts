@@ -1,4 +1,4 @@
-import { type User, type InsertUser, type Collection, type InsertCollection, type Bookmark, type InsertBookmark, type Session, type InsertSession, type SessionTab, type InsertSessionTab } from "@shared/schema";
+import { type User, type InsertUser, type Collection, type InsertCollection, type Bookmark, type InsertBookmark, type Session, type InsertSession, type SessionTab, type InsertSessionTab, type Share, type InsertShare } from "@shared/schema";
 import { SupabaseStorage } from './supabase-storage';
 
 export interface IStorage {
@@ -33,6 +33,14 @@ export interface IStorage {
   createSessionTab(tab: InsertSessionTab): Promise<SessionTab>;
   deleteSessionTab(id: string): Promise<boolean>;
   deleteSessionTabs(sessionId: string): Promise<boolean>;
+  
+  // Share management
+  getShares(workspaceId: string): Promise<Share[]>;
+  getShare(id: string): Promise<Share | undefined>;
+  getShareByViewKey(viewKey: string): Promise<Share | undefined>;
+  createShare(share: InsertShare): Promise<Share>;
+  updateShare(id: string, updates: Partial<InsertShare>): Promise<Share | undefined>;
+  deleteShare(id: string): Promise<boolean>;
 }
 
 // Use Supabase storage

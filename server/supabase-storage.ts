@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { User, InsertUser, Space, InsertSpace, Collection, InsertCollection, Bookmark, InsertBookmark, Workspace, Session, InsertSession, SessionTab, InsertSessionTab } from '@shared/schema';
+import type { User, InsertUser, Space, InsertSpace, Collection, InsertCollection, Bookmark, InsertBookmark, Workspace, Session, InsertSession, SessionTab, InsertSessionTab, Share, InsertShare } from '@shared/schema';
 
 export interface ISupabaseStorage {
   // Workspace operations
@@ -41,6 +41,14 @@ export interface ISupabaseStorage {
   createSessionTab(tab: InsertSessionTab): Promise<SessionTab>;
   deleteSessionTab(id: string): Promise<boolean>;
   deleteSessionTabs(sessionId: string): Promise<boolean>;
+  
+  // Share operations
+  getShares(workspaceId: string): Promise<Share[]>;
+  getShare(id: string): Promise<Share | undefined>;
+  getShareByViewKey(viewKey: string): Promise<Share | undefined>;
+  createShare(share: InsertShare): Promise<Share>;
+  updateShare(id: string, updates: Partial<InsertShare>): Promise<Share | undefined>;
+  deleteShare(id: string): Promise<boolean>;
 }
 
 export class SupabaseStorage implements ISupabaseStorage {
@@ -840,6 +848,163 @@ export class SupabaseStorage implements ISupabaseStorage {
       return !error;
     } catch (error) {
       console.error('Error deleting session tabs:', error);
+      return false;
+    }
+  }
+
+  // Share operations
+  async getShares(workspaceId: string): Promise<Share[]> {
+    try {
+      const { data, error } = await supabase
+        .from('shares')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data?.map(item => ({
+        id: item.id,
+        workspaceId: item.workspace_id,
+        viewKey: item.view_key,
+        name: item.name,
+        description: item.description,
+        createdAt: new Date(item.created_at),
+        expiresAt: item.expires_at ? new Date(item.expires_at) : null,
+      })) || [];
+    } catch (error) {
+      console.error('Error fetching shares:', error);
+      return [];
+    }
+  }
+
+  async getShare(id: string): Promise<Share | undefined> {
+    try {
+      const { data, error } = await supabase
+        .from('shares')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        viewKey: data.view_key,
+        name: data.name,
+        description: data.description,
+        createdAt: new Date(data.created_at),
+        expiresAt: data.expires_at ? new Date(data.expires_at) : null,
+      };
+    } catch (error) {
+      console.error('Error fetching share:', error);
+      return undefined;
+    }
+  }
+
+  async getShareByViewKey(viewKey: string): Promise<Share | undefined> {
+    try {
+      const { data, error } = await supabase
+        .from('shares')
+        .select('*')
+        .eq('view_key', viewKey)
+        .single();
+
+      if (error) throw error;
+
+      // Check if share has expired
+      if (data.expires_at && new Date(data.expires_at) < new Date()) {
+        return undefined;
+      }
+
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        viewKey: data.view_key,
+        name: data.name,
+        description: data.description,
+        createdAt: new Date(data.created_at),
+        expiresAt: data.expires_at ? new Date(data.expires_at) : null,
+      };
+    } catch (error) {
+      console.error('Error fetching share by view key:', error);
+      return undefined;
+    }
+  }
+
+  async createShare(share: InsertShare): Promise<Share> {
+    try {
+      const { data, error } = await supabase
+        .from('shares')
+        .insert({
+          workspace_id: share.workspaceId,
+          view_key: share.viewKey,
+          name: share.name,
+          description: share.description,
+          expires_at: share.expiresAt,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        viewKey: data.view_key,
+        name: data.name,
+        description: data.description,
+        createdAt: new Date(data.created_at),
+        expiresAt: data.expires_at ? new Date(data.expires_at) : null,
+      };
+    } catch (error) {
+      console.error('Error creating share:', error);
+      throw error;
+    }
+  }
+
+  async updateShare(id: string, updates: Partial<InsertShare>): Promise<Share | undefined> {
+    try {
+      const updateData: any = {};
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.expiresAt !== undefined) updateData.expires_at = updates.expiresAt;
+
+      const { data, error } = await supabase
+        .from('shares')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        viewKey: data.view_key,
+        name: data.name,
+        description: data.description,
+        createdAt: new Date(data.created_at),
+        expiresAt: data.expires_at ? new Date(data.expires_at) : null,
+      };
+    } catch (error) {
+      console.error('Error updating share:', error);
+      return undefined;
+    }
+  }
+
+  async deleteShare(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('shares')
+        .delete()
+        .eq('id', id);
+
+      return !error;
+    } catch (error) {
+      console.error('Error deleting share:', error);
       return false;
     }
   }

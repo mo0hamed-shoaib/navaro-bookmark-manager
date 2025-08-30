@@ -550,6 +550,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Share routes
+  app.get("/api/shares", async (req, res) => {
+    try {
+      const workspaceId = req.query.workspaceId as string;
+      if (!workspaceId) {
+        return res.status(400).json({ message: "Workspace ID is required" });
+      }
+      
+      const shares = await storage.getShares(workspaceId);
+      res.json(shares);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch shares" });
+    }
+  });
+
+  app.get("/api/shares/:id", async (req, res) => {
+    try {
+      const share = await storage.getShare(req.params.id);
+      if (!share) {
+        return res.status(404).json({ message: "Share not found" });
+      }
+      res.json(share);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch share" });
+    }
+  });
+
+  app.get("/api/shares/view/:viewKey", async (req, res) => {
+    try {
+      const share = await storage.getShareByViewKey(req.params.viewKey);
+      if (!share) {
+        return res.status(404).json({ message: "Share not found or expired" });
+      }
+      res.json(share);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch share" });
+    }
+  });
+
+  app.post("/api/shares", async (req, res) => {
+    try {
+      const { workspaceId, name, description, expiresAt } = req.body;
+      
+      if (!workspaceId) {
+        return res.status(400).json({ message: "Workspace ID is required" });
+      }
+
+      // Generate a unique view key
+      const viewKey = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      const share = await storage.createShare({
+        workspaceId,
+        viewKey,
+        name,
+        description,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      });
+      
+      res.status(201).json(share);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to create share" });
+    }
+  });
+
+  app.put("/api/shares/:id", async (req, res) => {
+    try {
+      const { name, description, expiresAt } = req.body;
+      
+      const share = await storage.updateShare(req.params.id, {
+        name,
+        description,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      });
+      
+      if (!share) {
+        return res.status(404).json({ message: "Share not found" });
+      }
+      res.json(share);
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid data", errors: error.errors });
+      }
+      res.status(500).json({ message: "Failed to update share" });
+    }
+  });
+
+  app.delete("/api/shares/:id", async (req, res) => {
+    try {
+      const success = await storage.deleteShare(req.params.id);
+      if (!success) {
+        return res.status(404).json({ message: "Share not found" });
+      }
+      res.status(204).send();
+    } catch (error) {
+      res.status(500).json({ message: "Failed to delete share" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

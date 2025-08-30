@@ -41,7 +41,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme-provider";
 import { themes, themeNames } from "@/lib/themes";
 import { apiRequest } from "@/lib/queryClient";
-import type { Space, Collection, Bookmark, Session, SessionTab } from "@shared/schema";
+import type { Space, Collection, Bookmark, Session, SessionTab, Share } from "@shared/schema";
 import { workspaceManager } from "@/lib/workspace";
 import { BookmarkSidebar } from "@/components/bookmark-sidebar";
 import { AddSpaceDialog } from "@/components/add-space-dialog";
@@ -49,6 +49,7 @@ import { AddCollectionDialog } from "@/components/add-collection-dialog";
 import { EditSpaceDialog } from "@/components/edit-space-dialog";
 import { EditCollectionDialog } from "@/components/edit-collection-dialog";
 import { SessionDialog } from "@/components/session-dialog";
+import { ShareDialog } from "@/components/share-dialog";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 
 const bookmarkFormSchema = z.object({
@@ -85,6 +86,7 @@ export function BookmarkManager() {
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null);
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+  const [sharesOpen, setSharesOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
 
@@ -215,6 +217,20 @@ export function BookmarkManager() {
       return response.json();
     },
     enabled: !!selectedSession?.id,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  });
+
+  // Share queries
+  const { data: shares = [], isLoading: isLoadingShares } = useQuery<Share[]>({
+    queryKey: ["/api/shares", currentWorkspaceId],
+    queryFn: async () => {
+      if (!currentWorkspaceId) return [];
+      const response = await fetch(`/api/shares?workspaceId=${currentWorkspaceId}`);
+      if (!response.ok) throw new Error("Failed to fetch shares");
+      return response.json();
+    },
+    enabled: !!currentWorkspaceId,
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -423,6 +439,29 @@ export function BookmarkManager() {
     },
   });
 
+  // Share mutations
+  const createShareMutation = useMutation({
+    mutationFn: async (data: { name: string; description: string; expiresAt?: Date }) => {
+      if (!currentWorkspaceId) throw new Error("No workspace ID");
+      return apiRequest("POST", "/api/shares", {
+        workspaceId: currentWorkspaceId,
+        ...data,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shares"] });
+    },
+  });
+
+  const deleteShareMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/shares/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/shares"] });
+    },
+  });
+
   const form = useForm<z.infer<typeof bookmarkFormSchema>>({
     resolver: zodResolver(bookmarkFormSchema),
     defaultValues: {
@@ -611,6 +650,7 @@ export function BookmarkManager() {
           setSearchOpen(true);
         }}
         onSessions={() => setSessionsOpen(true)}
+        onShares={() => setSharesOpen(true)}
         onSettings={() => setSettingsOpen(true)}
         currentWorkspaceId={currentWorkspaceId}
         isLoadingSpaces={isLoadingSpaces}
@@ -1755,6 +1795,17 @@ export function BookmarkManager() {
       onDeleteSession={deleteSessionMutation.mutate}
       onRestoreSession={restoreSessionMutation.mutate}
       isLoadingSessions={isLoadingSessions}
+    />
+
+    {/* Share Dialog */}
+    <ShareDialog
+      open={sharesOpen}
+      onOpenChange={setSharesOpen}
+      workspaceId={currentWorkspaceId}
+      shares={shares}
+      onCreateShare={createShareMutation.mutate}
+      onDeleteShare={deleteShareMutation.mutate}
+      isLoadingShares={isLoadingShares}
     />
   </SidebarProvider>
   );
