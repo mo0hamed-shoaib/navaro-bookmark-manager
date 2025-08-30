@@ -111,7 +111,7 @@ export function BookmarkManager() {
     },
     enabled: !!currentWorkspaceId,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Auto-select first space when spaces are loaded
@@ -146,7 +146,7 @@ export function BookmarkManager() {
     },
     enabled: !!currentWorkspaceId && spaces.length > 0,
     staleTime: 2 * 60 * 1000, // 2 minutes
-    cacheTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
   });
 
   // Get all bookmarks for sidebar counts (optimized with caching)
@@ -160,7 +160,7 @@ export function BookmarkManager() {
     },
     enabled: !!currentWorkspaceId,
     staleTime: 5 * 60 * 1000, // 5 minutes
-    cacheTime: 10 * 60 * 1000, // 10 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
   // Get filtered bookmarks for current view
@@ -1113,37 +1113,26 @@ export function BookmarkManager() {
               const filtered = allBookmarks
                 .filter(bookmark => {
                   const query = searchQuery.toLowerCase();
-                  const matches = bookmark.title.toLowerCase().includes(query) ||
+                  return bookmark.title.toLowerCase().includes(query) ||
                          bookmark.url.toLowerCase().includes(query) ||
                          bookmark.description?.toLowerCase().includes(query) ||
                          (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
-                  console.log(`Bookmark "${bookmark.title}" matches:`, matches);
-                  return matches;
                 });
               
-              console.log("Filtered results:", filtered);
-              console.log("Filtered length:", filtered.length);
-              
               if (filtered.length === 0) {
-                console.log("Returning CommandEmpty - no results");
                 return <CommandEmpty>No results found.</CommandEmpty>;
               }
               
-              console.log("Returning CommandGroup with results");
               const resultsToShow = filtered.slice(0, 10);
-              console.log("Results to show:", resultsToShow);
               
               return (
                 <div className="p-2">
                   <div className="text-sm font-medium text-muted-foreground mb-2">Bookmarks</div>
-                  {resultsToShow.map((bookmark) => {
-                    console.log("Rendering bookmark:", bookmark.title);
-                    return (
+                  {resultsToShow.map((bookmark) => (
                       <div
                         key={bookmark.id}
                         className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
                         onClick={() => {
-                          console.log("Search result clicked:", bookmark.title);
                           window.open(bookmark.url, "_blank");
                           setSearchOpen(false);
                           setSearchQuery(""); // Clear search when selecting
@@ -1155,12 +1144,10 @@ export function BookmarkManager() {
                         )}
                         <span>{bookmark.title}</span>
                       </div>
-                    );
-                  })}
+                    ))}
                 </div>
               );
             }
-            console.log("Returning CommandEmpty - no query");
             return <CommandEmpty>Type to search...</CommandEmpty>;
           })()}
         </CommandList>
