@@ -1,5 +1,5 @@
 import { sql } from "drizzle-orm";
-import { pgTable, text, varchar, timestamp, boolean, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, varchar, timestamp, boolean, jsonb, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -59,6 +59,26 @@ export const bookmarks = pgTable("bookmarks", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Session management tables
+export const sessions = pgTable("sessions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const sessionTabs = pgTable("session_tabs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sessionId: varchar("session_id").notNull().references(() => sessions.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  url: text("url").notNull(),
+  favicon: text("favicon"),
+  orderIndex: integer("order_index").notNull().default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -98,6 +118,20 @@ export const insertWorkspaceSchema = createInsertSchema(workspaces).pick({
   id: true,
 });
 
+export const insertSessionSchema = createInsertSchema(sessions).pick({
+  workspaceId: true,
+  name: true,
+  description: true,
+});
+
+export const insertSessionTabSchema = createInsertSchema(sessionTabs).pick({
+  sessionId: true,
+  title: true,
+  url: true,
+  favicon: true,
+  orderIndex: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -112,3 +146,9 @@ export type Bookmark = typeof bookmarks.$inferSelect;
 
 export type InsertWorkspace = z.infer<typeof insertWorkspaceSchema>;
 export type Workspace = typeof workspaces.$inferSelect;
+
+export type InsertSession = z.infer<typeof insertSessionSchema>;
+export type Session = typeof sessions.$inferSelect;
+
+export type InsertSessionTab = z.infer<typeof insertSessionTabSchema>;
+export type SessionTab = typeof sessionTabs.$inferSelect;

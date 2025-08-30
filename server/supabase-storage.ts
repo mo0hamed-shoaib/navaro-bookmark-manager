@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { User, InsertUser, Space, InsertSpace, Collection, InsertCollection, Bookmark, InsertBookmark, Workspace } from '@shared/schema';
+import type { User, InsertUser, Space, InsertSpace, Collection, InsertCollection, Bookmark, InsertBookmark, Workspace, Session, InsertSession, SessionTab, InsertSessionTab } from '@shared/schema';
 
 export interface ISupabaseStorage {
   // Workspace operations
@@ -29,6 +29,18 @@ export interface ISupabaseStorage {
   searchBookmarks(query: string): Promise<Bookmark[]>;
   getPinnedBookmarks(): Promise<Bookmark[]>;
   getRecentBookmarks(limit?: number): Promise<Bookmark[]>;
+  
+  // Session operations
+  getSessions(workspaceId: string): Promise<Session[]>;
+  getSession(id: string): Promise<Session | undefined>;
+  createSession(session: InsertSession): Promise<Session>;
+  updateSession(id: string, updates: Partial<InsertSession>): Promise<Session | undefined>;
+  deleteSession(id: string): Promise<boolean>;
+  
+  getSessionTabs(sessionId: string): Promise<SessionTab[]>;
+  createSessionTab(tab: InsertSessionTab): Promise<SessionTab>;
+  deleteSessionTab(id: string): Promise<boolean>;
+  deleteSessionTabs(sessionId: string): Promise<boolean>;
 }
 
 export class SupabaseStorage implements ISupabaseStorage {
@@ -624,6 +636,211 @@ export class SupabaseStorage implements ISupabaseStorage {
     } catch (error) {
       console.error('Error fetching recent bookmarks:', error);
       return [];
+    }
+  }
+
+  // Session operations
+  async getSessions(workspaceId: string): Promise<Session[]> {
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      return data?.map(item => ({
+        id: item.id,
+        workspaceId: item.workspace_id,
+        name: item.name,
+        description: item.description,
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at),
+      })) || [];
+    } catch (error) {
+      console.error('Error fetching sessions:', error);
+      return [];
+    }
+  }
+
+  async getSession(id: string): Promise<Session | undefined> {
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error || !data) return undefined;
+
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        name: data.name,
+        description: data.description,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    } catch (error) {
+      console.error('Error fetching session:', error);
+      return undefined;
+    }
+  }
+
+  async createSession(session: InsertSession): Promise<Session> {
+    try {
+      const { data, error } = await supabase
+        .from('sessions')
+        .insert({
+          workspace_id: session.workspaceId,
+          name: session.name,
+          description: session.description,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        name: data.name,
+        description: data.description,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    } catch (error) {
+      console.error('Error creating session:', error);
+      throw error;
+    }
+  }
+
+  async updateSession(id: string, updates: Partial<InsertSession>): Promise<Session | undefined> {
+    try {
+      const updateData: any = {};
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      updateData.updated_at = new Date().toISOString();
+
+      const { data, error } = await supabase
+        .from('sessions')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error || !data) return undefined;
+
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        name: data.name,
+        description: data.description,
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    } catch (error) {
+      console.error('Error updating session:', error);
+      return undefined;
+    }
+  }
+
+  async deleteSession(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('sessions')
+        .delete()
+        .eq('id', id);
+
+      return !error;
+    } catch (error) {
+      console.error('Error deleting session:', error);
+      return false;
+    }
+  }
+
+  async getSessionTabs(sessionId: string): Promise<SessionTab[]> {
+    try {
+      const { data, error } = await supabase
+        .from('session_tabs')
+        .select('*')
+        .eq('session_id', sessionId)
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+
+      return data?.map(item => ({
+        id: item.id,
+        sessionId: item.session_id,
+        title: item.title,
+        url: item.url,
+        favicon: item.favicon,
+        orderIndex: item.order_index,
+        createdAt: new Date(item.created_at),
+      })) || [];
+    } catch (error) {
+      console.error('Error fetching session tabs:', error);
+      return [];
+    }
+  }
+
+  async createSessionTab(tab: InsertSessionTab): Promise<SessionTab> {
+    try {
+      const { data, error } = await supabase
+        .from('session_tabs')
+        .insert({
+          session_id: tab.sessionId,
+          title: tab.title,
+          url: tab.url,
+          favicon: tab.favicon,
+          order_index: tab.orderIndex,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        sessionId: data.session_id,
+        title: data.title,
+        url: data.url,
+        favicon: data.favicon,
+        orderIndex: data.order_index,
+        createdAt: new Date(data.created_at),
+      };
+    } catch (error) {
+      console.error('Error creating session tab:', error);
+      throw error;
+    }
+  }
+
+  async deleteSessionTab(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('session_tabs')
+        .delete()
+        .eq('id', id);
+
+      return !error;
+    } catch (error) {
+      console.error('Error deleting session tab:', error);
+      return false;
+    }
+  }
+
+  async deleteSessionTabs(sessionId: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('session_tabs')
+        .delete()
+        .eq('session_id', sessionId);
+
+      return !error;
+    } catch (error) {
+      console.error('Error deleting session tabs:', error);
+      return false;
     }
   }
 }

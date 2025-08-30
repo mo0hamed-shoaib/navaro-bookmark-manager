@@ -61,6 +61,7 @@ interface BookmarkSidebarProps {
   onDeleteSpace: (spaceId: string) => void
   onDeleteCollection: (collectionId: string) => void
   onSearch: () => void
+  onSessions: () => void
   onSettings: () => void
   currentWorkspaceId?: string | null
   isLoadingSpaces?: boolean
@@ -89,6 +90,7 @@ export function BookmarkSidebar({
   onDeleteSpace,
   onDeleteCollection,
   onSearch,
+  onSessions,
   onSettings,
   currentWorkspaceId,
   isLoadingSpaces = false,
@@ -135,18 +137,24 @@ export function BookmarkSidebar({
         <SidebarGroup>
           <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
           <SidebarMenu>
-            <SidebarMenuItem>
+                        <SidebarMenuItem>
                              <SidebarMenuButton onClick={onAddBookmark} tooltip="Add Bookmark" className="cursor-pointer">
-                <Plus />
-                <span>Add Bookmark</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-            <SidebarMenuItem>
-                             <SidebarMenuButton onClick={onSearch} tooltip="Search All" className="cursor-pointer">
-                <Search />
-                <span>Search All</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
+                 <Plus />
+                 <span>Add Bookmark</span>
+               </SidebarMenuButton>
+             </SidebarMenuItem>
+             <SidebarMenuItem>
+                              <SidebarMenuButton onClick={onSearch} tooltip="Search All" className="cursor-pointer">
+                 <Search />
+                 <span>Search All</span>
+               </SidebarMenuButton>
+             </SidebarMenuItem>
+             <SidebarMenuItem>
+                              <SidebarMenuButton onClick={onSessions} tooltip="Saved Sessions" className="cursor-pointer">
+                 <Clock />
+                 <span>Saved Sessions</span>
+               </SidebarMenuButton>
+             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroup>
 
