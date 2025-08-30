@@ -222,9 +222,9 @@ export function BookmarkSidebar({
            </SidebarMenu>
          </SidebarGroup>
 
-                                   {/* All Bookmarks */}
-          <SidebarGroup>
-            <SidebarGroupLabel>Collections</SidebarGroupLabel>
+                                                                       {/* All Bookmarks */}
+           <SidebarGroup>
+             <SidebarGroupLabel>Views</SidebarGroupLabel>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton 
