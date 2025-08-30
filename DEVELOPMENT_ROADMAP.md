@@ -23,6 +23,9 @@ Building a **free website** that combines:
 - Context menus and bulk actions
 - Pinning system
 - Settings dialog
+- **Supabase integration with persistent storage**
+- **Preview image extraction with manual override**
+- **Favicon extraction and fallbacks**
 
 ### ❌ **Missing/Incomplete**
 - Magic link system (currently demo user)
@@ -42,13 +45,15 @@ Building a **free website** that combines:
 ### **Phase 1: Core Infrastructure** 
 *Priority: Critical - Foundation for everything else*
 
-#### **Phase 1.1: Supabase Integration** ⏳
+#### **Phase 1.1: Supabase Integration** ✅
 **Goal**: Replace in-memory storage with Supabase
-- [ ] Set up Supabase project
-- [ ] Create database schema (workspaces, spaces, collections, bookmarks)
-- [ ] Update API routes to use Supabase
-- [ ] Test data persistence
-- [ ] Verify no functionality breaks
+- [x] Set up Supabase project
+- [x] Create database schema (workspaces, spaces, collections, bookmarks)
+- [x] Create Supabase client configuration
+- [x] Create Supabase storage service
+- [x] Update API routes to use Supabase
+- [x] Test data persistence
+- [x] Verify no functionality breaks
 
 #### **Phase 1.2: Magic Link System** ⏳
 **Goal**: Implement anonymous workspace system
