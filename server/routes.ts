@@ -8,6 +8,49 @@ import { AbortController } from "abort-controller";
 import * as cheerio from "cheerio";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Workspace routes for Magic Link System
+  app.post("/api/workspaces", async (req, res) => {
+    try {
+      const { id } = req.body;
+      
+      if (!id) {
+        return res.status(400).json({ error: "Workspace ID is required" });
+      }
+
+      // Check if workspace already exists
+      const existingWorkspace = await storage.getWorkspace(id);
+      if (existingWorkspace) {
+        return res.status(200).json(existingWorkspace);
+      }
+
+      // Create new workspace
+      const workspace = await storage.createWorkspace(id);
+      res.status(201).json(workspace);
+    } catch (error) {
+      console.error("Error creating workspace:", error);
+      res.status(500).json({ 
+        error: "Failed to create workspace", 
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get("/api/workspaces/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const workspace = await storage.getWorkspace(id);
+      
+      if (!workspace) {
+        return res.status(404).json({ error: "Workspace not found" });
+      }
+      
+      res.json(workspace);
+    } catch (error) {
+      console.error("Error getting workspace:", error);
+      res.status(500).json({ error: "Failed to get workspace" });
+    }
+  });
+
   // Collections routes
   app.get("/api/collections", async (req, res) => {
     try {
@@ -260,7 +303,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           }
         }
       } catch (fetchError) {
-        console.log('Could not fetch webpage for preview:', fetchError.message);
+        console.log('Could not fetch webpage for preview:', fetchError instanceof Error ? fetchError.message : 'Unknown error');
         
         // For network errors, still try to provide a favicon
         try {
@@ -275,7 +318,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           return res.json(preview);
         } catch (urlError) {
-          console.log('Could not parse URL for fallback:', urlError.message);
+          console.log('Could not parse URL for fallback:', urlError instanceof Error ? urlError.message : 'Unknown error');
         }
       }
 
@@ -288,7 +331,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Use Google's favicon service as a fallback image
             fallbackImage = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
           } catch (error) {
-            console.log('Could not generate fallback image:', error.message);
+            console.log('Could not generate fallback image:', error instanceof Error ? error.message : 'Unknown error');
           }
           
           const preview = {
