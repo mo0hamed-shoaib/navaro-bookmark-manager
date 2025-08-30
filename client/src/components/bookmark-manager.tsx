@@ -151,12 +151,14 @@ export function BookmarkManager() {
 
   // Get all bookmarks for sidebar counts (optimized with caching)
   const { data: allBookmarks = [] } = useQuery<Bookmark[]>({
-    queryKey: ["/api/bookmarks"],
+    queryKey: ["/api/bookmarks", currentWorkspaceId],
     queryFn: async () => {
-      const response = await fetch("/api/bookmarks");
+      if (!currentWorkspaceId) return [];
+      const response = await fetch(`/api/bookmarks?workspaceId=${currentWorkspaceId}`);
       if (!response.ok) throw new Error("Failed to fetch bookmarks");
       return response.json();
     },
+    enabled: !!currentWorkspaceId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     cacheTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -1110,15 +1112,23 @@ export function BookmarkManager() {
             {(() => {
               // Use global search for dialog
               if (searchQuery.trim()) {
-                return allBookmarks
+                console.log("Search query:", searchQuery);
+                console.log("All bookmarks count:", allBookmarks.length);
+                console.log("All bookmarks:", allBookmarks);
+                
+                const filtered = allBookmarks
                   .filter(bookmark => {
                     const query = searchQuery.toLowerCase();
-                    return bookmark.title.toLowerCase().includes(query) ||
+                    const matches = bookmark.title.toLowerCase().includes(query) ||
                            bookmark.url.toLowerCase().includes(query) ||
                            bookmark.description?.toLowerCase().includes(query) ||
                            (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
-                  })
-                  .slice(0, 10)
+                    console.log(`Bookmark "${bookmark.title}" matches:`, matches);
+                    return matches;
+                  });
+                
+                console.log("Filtered results:", filtered);
+                return filtered.slice(0, 10)
                   .map((bookmark) => (
                     <div
                       key={bookmark.id}
