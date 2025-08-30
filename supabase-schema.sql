@@ -14,7 +14,7 @@ CREATE TABLE workspaces (
 -- Spaces (high-level organization)
 CREATE TABLE spaces (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   description TEXT,
   icon TEXT DEFAULT '📁',
@@ -54,7 +54,7 @@ CREATE TABLE bookmarks (
 -- Sharing (view-only links)
 CREATE TABLE shares (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  workspace_id UUID NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
+  workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,
   view_key TEXT UNIQUE NOT NULL,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -144,19 +144,19 @@ DECLARE
     collection_learn_id UUID;
 BEGIN
     -- Create a new workspace and capture its ID
-    INSERT INTO workspaces DEFAULT VALUES RETURNING id INTO workspace_id;
+    INSERT INTO workspaces (id) VALUES ('default-workspace') RETURNING id INTO workspace_id;
     
     -- Insert spaces and capture their IDs
     INSERT INTO spaces (workspace_id, name, description, icon, order_index) VALUES 
-      (workspace_id, 'Design Resources', 'A curated collection of design tools, inspiration, and resources', '🎨', 1)
+      ('default-workspace', 'Design Resources', 'A curated collection of design tools, inspiration, and resources', '🎨', 1)
     RETURNING id INTO space_design_id;
     
     INSERT INTO spaces (workspace_id, name, description, icon, order_index) VALUES 
-      (workspace_id, 'Work Tools', 'Essential tools for daily work', '⚡', 2)
+      ('default-workspace', 'Work Tools', 'Essential tools for daily work', '⚡', 2)
     RETURNING id INTO space_work_id;
     
     INSERT INTO spaces (workspace_id, name, description, icon, order_index) VALUES 
-      (workspace_id, 'Learning Resources', 'Educational content and tutorials', '📚', 3)
+      ('default-workspace', 'Learning Resources', 'Educational content and tutorials', '📚', 3)
     RETURNING id INTO space_learn_id;
     
     -- Insert collections and capture their IDs
