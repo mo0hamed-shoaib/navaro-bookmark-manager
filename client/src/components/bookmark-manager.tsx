@@ -18,7 +18,8 @@ import {
   Trash,
   ChevronRight,
   CheckSquare,
-  Clock
+  Clock,
+  X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -610,7 +611,6 @@ export function BookmarkManager() {
                 className="pl-10 pr-8"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onFocus={() => setSearchOpen(true)}
                 data-testid="input-search"
               />
               {searchQuery && (
@@ -1125,25 +1125,45 @@ export function BookmarkManager() {
 
       {/* Search Dialog */}
       <CommandDialog open={searchOpen} onOpenChange={setSearchOpen}>
-        <CommandInput placeholder="Search bookmarks, collections, tags..." />
+        <CommandInput 
+          placeholder="Search bookmarks, collections, tags..." 
+          value={searchQuery}
+          onValueChange={setSearchQuery}
+        />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
           <CommandGroup heading="Bookmarks">
-            {filteredBookmarks.slice(0, 5).map((bookmark) => (
-              <CommandItem
-                key={bookmark.id}
-                onSelect={() => {
-                  window.open(bookmark.url, "_blank");
-                  setSearchOpen(false);
-                }}
-                data-testid={`search-result-${bookmark.id}`}
-              >
-                {bookmark.favicon && (
-                  <img src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
-                )}
-                <span>{bookmark.title}</span>
-              </CommandItem>
-            ))}
+            {(() => {
+              // Use global search for dialog
+              if (searchQuery.trim()) {
+                return allBookmarks
+                  .filter(bookmark => {
+                    const query = searchQuery.toLowerCase();
+                    return bookmark.title.toLowerCase().includes(query) ||
+                           bookmark.url.toLowerCase().includes(query) ||
+                           bookmark.description?.toLowerCase().includes(query) ||
+                           (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
+                  })
+                  .slice(0, 10)
+                  .map((bookmark) => (
+                    <CommandItem
+                      key={bookmark.id}
+                      onSelect={() => {
+                        window.open(bookmark.url, "_blank");
+                        setSearchOpen(false);
+                        setSearchQuery(""); // Clear search when selecting
+                      }}
+                      data-testid={`search-result-${bookmark.id}`}
+                    >
+                      {bookmark.favicon && (
+                        <img src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
+                      )}
+                      <span>{bookmark.title}</span>
+                    </CommandItem>
+                  ));
+              }
+              return [];
+            })()}
           </CommandGroup>
         </CommandList>
       </CommandDialog>
