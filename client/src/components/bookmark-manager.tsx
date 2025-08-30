@@ -50,6 +50,8 @@ const bookmarkFormSchema = z.object({
   description: z.string().optional(),
   tags: z.string().optional(),
   collectionId: z.string().optional(),
+  previewImage: z.string().optional(),
+  previewMode: z.enum(["auto", "manual"]).default("auto"),
 });
 
 type ViewMode = "grid" | "list" | "compact";
@@ -73,6 +75,17 @@ export function BookmarkManager() {
     queryKey: ["/api/collections"],
   });
 
+  // Get all bookmarks for sidebar counts
+  const { data: allBookmarks = [] } = useQuery<Bookmark[]>({
+    queryKey: ["/api/bookmarks"],
+    queryFn: async () => {
+      const response = await fetch("/api/bookmarks");
+      if (!response.ok) throw new Error("Failed to fetch bookmarks");
+      return response.json();
+    },
+  });
+
+  // Get filtered bookmarks for current view
   const { data: bookmarks = [] } = useQuery<Bookmark[]>({
     queryKey: ["/api/bookmarks", selectedCollection],
     queryFn: async () => {
@@ -96,13 +109,65 @@ export function BookmarkManager() {
   const createBookmarkMutation = useMutation({
     mutationFn: async (data: z.infer<typeof bookmarkFormSchema>) => {
       const tags = data.tags ? data.tags.split(",").map(tag => tag.trim()).filter(Boolean) : [];
-      const bookmarkData = { ...data, tags };
+      
+      // Extract favicon and preview data from URL
+      let favicon = null;
+      let preview = null;
+      
+      try {
+        const url = new URL(data.url);
+        // Generate favicon URL - try multiple common favicon locations
+        const faviconUrls = [
+          `${url.protocol}//${url.hostname}/favicon.ico`,
+          `${url.protocol}//${url.hostname}/apple-touch-icon.png`,
+          `${url.protocol}//${url.hostname}/apple-touch-icon-precomposed.png`,
+          `${url.protocol}//${url.hostname}/icon.png`
+        ];
+        
+        // Use the first favicon URL as default
+        favicon = faviconUrls[0];
+        
+        // Handle preview based on mode
+        if (data.previewMode === "auto") {
+          // Try to fetch basic preview data
+          const response = await fetch(`/api/bookmark-preview?url=${encodeURIComponent(data.url)}`);
+          if (response.ok) {
+            const previewData = await response.json();
+            preview = previewData;
+          }
+        } else if (data.previewMode === "manual" && data.previewImage) {
+          // Use manual preview image
+          preview = {
+            title: data.title,
+            description: data.description || `Visit ${url.hostname}`,
+            image: data.previewImage
+          };
+        }
+      } catch (error) {
+        console.log('Could not extract favicon/preview:', error);
+      }
+      
+      const bookmarkData = { 
+        ...data, 
+        tags,
+        favicon,
+        preview
+      };
       return apiRequest("POST", "/api/bookmarks", bookmarkData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks/recent"] });
       setAddBookmarkOpen(false);
+      form.reset({
+        title: "",
+        url: "",
+        description: "",
+        tags: "",
+        collectionId: "",
+        previewImage: "",
+        previewMode: "auto"
+      });
     },
   });
 
@@ -150,6 +215,8 @@ export function BookmarkManager() {
       description: "",
       tags: "",
       collectionId: "",
+      previewImage: "",
+      previewMode: "auto",
     },
   });
 
@@ -378,7 +445,7 @@ export function BookmarkManager() {
                 <span className="text-lg">📁</span>
                 {!sidebarCollapsed && <span className="ml-3 flex-1 text-left">All Bookmarks</span>}
                 {!sidebarCollapsed && (
-                  <span className="text-xs text-muted-foreground">{bookmarks.length}</span>
+                  <span className="text-xs text-muted-foreground">{allBookmarks.length}</span>
                 )}
               </Button>
               {collections.map((collection) => (
@@ -394,7 +461,7 @@ export function BookmarkManager() {
                       <>
                         <span className="ml-3 flex-1 text-left">{collection.name}</span>
                         <span className="text-xs text-muted-foreground">
-                          {bookmarks.filter(b => b.collectionId === collection.id).length}
+                          {allBookmarks.filter(b => b.collectionId === collection.id).length}
                         </span>
                       </>
                     )}
@@ -1099,6 +1166,55 @@ export function BookmarkManager() {
                   </FormItem>
                 )}
               />
+              
+              {/* Preview Image Section */}
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="previewMode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        Preview Image
+                        <span className="text-xs text-muted-foreground">
+                          (Auto works for most sites, Manual for blocked sites)
+                        </span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-preview-mode">
+                            <SelectValue placeholder="Select preview mode" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="auto">Auto-extract from website</SelectItem>
+                          <SelectItem value="manual">Manual URL</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="previewImage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preview Image URL (Optional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="https://example.com/image.jpg" 
+                          {...field} 
+                          data-testid="input-preview-image"
+                          disabled={form.watch("previewMode") === "auto"}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
               <FormField
                 control={form.control}
                 name="collectionId"
