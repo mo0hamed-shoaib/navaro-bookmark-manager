@@ -1122,34 +1122,45 @@ export function BookmarkManager() {
                 });
               
               console.log("Filtered results:", filtered);
+              console.log("Filtered length:", filtered.length);
               
               if (filtered.length === 0) {
+                console.log("Returning CommandEmpty - no results");
                 return <CommandEmpty>No results found.</CommandEmpty>;
               }
               
+              console.log("Returning CommandGroup with results");
+              const resultsToShow = filtered.slice(0, 10);
+              console.log("Results to show:", resultsToShow);
+              
               return (
-                <CommandGroup heading="Bookmarks">
-                  {filtered.slice(0, 10).map((bookmark) => (
-                    <div
-                      key={bookmark.id}
-                      className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
-                      onClick={() => {
-                        console.log("Search result clicked:", bookmark.title);
-                        window.open(bookmark.url, "_blank");
-                        setSearchOpen(false);
-                        setSearchQuery(""); // Clear search when selecting
-                      }}
-                      data-testid={`search-result-${bookmark.id}`}
-                    >
-                      {bookmark.favicon && (
-                        <img src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
-                      )}
-                      <span>{bookmark.title}</span>
-                    </div>
-                  ))}
-                </CommandGroup>
+                <div className="p-2">
+                  <div className="text-sm font-medium text-muted-foreground mb-2">Bookmarks</div>
+                  {resultsToShow.map((bookmark) => {
+                    console.log("Rendering bookmark:", bookmark.title);
+                    return (
+                      <div
+                        key={bookmark.id}
+                        className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+                        onClick={() => {
+                          console.log("Search result clicked:", bookmark.title);
+                          window.open(bookmark.url, "_blank");
+                          setSearchOpen(false);
+                          setSearchQuery(""); // Clear search when selecting
+                        }}
+                        data-testid={`search-result-${bookmark.id}`}
+                      >
+                        {bookmark.favicon && (
+                          <img src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
+                        )}
+                        <span>{bookmark.title}</span>
+                      </div>
+                    );
+                  })}
+                </div>
               );
             }
+            console.log("Returning CommandEmpty - no query");
             return <CommandEmpty>Type to search...</CommandEmpty>;
           })()}
         </CommandList>
