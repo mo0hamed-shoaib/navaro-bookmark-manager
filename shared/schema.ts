@@ -18,14 +18,27 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const collections = pgTable("collections", {
+export const spaces = pgTable("spaces", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  workspaceId: text("workspace_id").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
   icon: text("icon").default("📁"),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  order: text("order").notNull().default("0"),
+  orderIndex: text("order_index").notNull().default("0"),
   createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const collections = pgTable("collections", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  spaceId: varchar("space_id").notNull().references(() => spaces.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  icon: text("icon").default("📁"),
+  orderIndex: text("order_index").notNull().default("0"),
+  viewMode: text("view_mode").default("card"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const bookmarks = pgTable("bookmarks", {
@@ -40,8 +53,7 @@ export const bookmarks = pgTable("bookmarks", {
     image?: string;
   }>(),
   tags: text("tags").array(),
-  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  collectionId: varchar("collection_id").references(() => collections.id, { onDelete: "set null" }),
+  collectionId: varchar("collection_id").notNull().references(() => collections.id, { onDelete: "cascade" }),
   isPinned: boolean("is_pinned").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -54,12 +66,21 @@ export const insertUserSchema = createInsertSchema(users).pick({
   name: true,
 });
 
-export const insertCollectionSchema = createInsertSchema(collections).pick({
+export const insertSpaceSchema = createInsertSchema(spaces).pick({
+  workspaceId: true,
   name: true,
   description: true,
   icon: true,
-  userId: true,
-  order: true,
+  orderIndex: true,
+});
+
+export const insertCollectionSchema = createInsertSchema(collections).pick({
+  spaceId: true,
+  name: true,
+  description: true,
+  icon: true,
+  orderIndex: true,
+  viewMode: true,
 });
 
 export const insertBookmarkSchema = createInsertSchema(bookmarks).pick({
@@ -69,7 +90,6 @@ export const insertBookmarkSchema = createInsertSchema(bookmarks).pick({
   favicon: true,
   preview: true,
   tags: true,
-  userId: true,
   collectionId: true,
   isPinned: true,
 });
@@ -80,6 +100,9 @@ export const insertWorkspaceSchema = createInsertSchema(workspaces).pick({
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
+
+export type InsertSpace = z.infer<typeof insertSpaceSchema>;
+export type Space = typeof spaces.$inferSelect;
 
 export type InsertCollection = z.infer<typeof insertCollectionSchema>;
 export type Collection = typeof collections.$inferSelect;
