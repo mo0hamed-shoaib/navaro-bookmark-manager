@@ -32,9 +32,9 @@ Building a **free website** that combines:
 - **Functional breadcrumb navigation**
 - **Enhanced sidebar with collapsible design**
 - **Performance optimizations with query caching**
+- **Session save/restore functionality with bookmarklet**
 
 ### ❌ **Missing/Incomplete**
-- Session save/restore functionality
 - Advanced search filters (tags, date, domain)
 - Sharing system (view-only)
 - Import/export functionality
@@ -91,15 +91,15 @@ Building a **free website** that combines:
 ### **Phase 2: Core Features**
 *Priority: High - Essential Toby-like functionality*
 
-#### **Phase 2.1: Session Save/Restore** ⏳
+#### **Phase 2.1: Session Save/Restore** ✅
 **Goal**: Capture and restore browser tabs
-- [ ] Create browser bookmarklet for tab capture
-- [ ] Implement tab data extraction
-- [ ] Add "Save Session" button
-- [ ] Create session preview UI
-- [ ] Implement selective restore
-- [ ] Test session functionality
-- [ ] Verify no functionality breaks
+- [x] Create browser bookmarklet for tab capture
+- [x] Implement tab data extraction
+- [x] Add "Save Session" button
+- [x] Create session preview UI
+- [x] Implement selective restore
+- [x] Test session functionality
+- [x] Verify no functionality breaks
 
 #### **Phase 2.2: Advanced Search** ✅
 **Goal**: Global search with filters
@@ -367,4 +367,4 @@ shares (
 ---
 
 *Last Updated: December 2024*
-*Status: Phase 2.4 Complete - Ready for Phase 2.1 (Session Save/Restore)*
+*Status: Phase 2.1 Complete - Ready for Phase 2.3 (4th View Mode)*
