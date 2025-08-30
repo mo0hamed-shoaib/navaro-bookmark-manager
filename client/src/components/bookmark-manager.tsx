@@ -43,6 +43,7 @@ import { useTheme } from "@/components/theme-provider";
 import { themes, themeNames } from "@/lib/themes";
 import { apiRequest } from "@/lib/queryClient";
 import type { Collection, Bookmark } from "@shared/schema";
+import { workspaceManager } from "@/lib/workspace";
 
 const bookmarkFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -68,8 +69,24 @@ export function BookmarkManager() {
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const [editBookmarkOpen, setEditBookmarkOpen] = useState(false);
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
+  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
+
+  // Initialize workspace on component mount
+  useEffect(() => {
+    const initializeWorkspace = async () => {
+      try {
+        const workspaceId = await workspaceManager.getOrCreateWorkspace();
+        setCurrentWorkspaceId(workspaceId);
+        console.log('Workspace initialized:', workspaceId);
+      } catch (error) {
+        console.error('Failed to initialize workspace:', error);
+      }
+    };
+
+    initializeWorkspace();
+  }, []);
 
   const { data: collections = [] } = useQuery<Collection[]>({
     queryKey: ["/api/collections"],
@@ -225,7 +242,7 @@ export function BookmarkManager() {
   const togglePin = (bookmark: Bookmark) => {
     updateBookmarkMutation.mutate({
       id: bookmark.id,
-      updates: { isPinned: !bookmark.isPinned },
+      data: { isPinned: !bookmark.isPinned } as any,
     });
   };
 
@@ -316,7 +333,16 @@ export function BookmarkManager() {
             <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
               <BookmarkIcon className="text-primary-foreground text-sm" />
             </div>
-            {!sidebarCollapsed && <span className="font-semibold text-lg ml-2">Toby</span>}
+            {!sidebarCollapsed && (
+              <div className="ml-2">
+                <span className="font-semibold text-lg">Toby</span>
+                {currentWorkspaceId && (
+                  <div className="text-xs text-muted-foreground">
+                    Workspace: {currentWorkspaceId.substring(0, 8)}...
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
