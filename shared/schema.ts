@@ -3,6 +3,12 @@ import { pgTable, text, varchar, timestamp, boolean, jsonb } from "drizzle-orm/p
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const workspaces = pgTable("workspaces", {
+  id: text("id").primaryKey(), // Custom workspace ID for magic links
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   username: text("username").notNull().unique(),
@@ -68,6 +74,10 @@ export const insertBookmarkSchema = createInsertSchema(bookmarks).pick({
   isPinned: true,
 });
 
+export const insertWorkspaceSchema = createInsertSchema(workspaces).pick({
+  id: true,
+});
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 
@@ -76,3 +86,6 @@ export type Collection = typeof collections.$inferSelect;
 
 export type InsertBookmark = z.infer<typeof insertBookmarkSchema>;
 export type Bookmark = typeof bookmarks.$inferSelect;
+
+export type InsertWorkspace = z.infer<typeof insertWorkspaceSchema>;
+export type Workspace = typeof workspaces.$inferSelect;
