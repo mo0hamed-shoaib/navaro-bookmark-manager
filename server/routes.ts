@@ -554,6 +554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/shares", async (req, res) => {
     try {
       const workspaceId = req.query.workspaceId as string;
+      
       if (!workspaceId) {
         return res.status(400).json({ message: "Workspace ID is required" });
       }

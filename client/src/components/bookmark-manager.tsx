@@ -225,7 +225,10 @@ export function BookmarkManager() {
   const { data: shares = [], isLoading: isLoadingShares } = useQuery<Share[]>({
     queryKey: ["/api/shares", currentWorkspaceId],
     queryFn: async () => {
-      if (!currentWorkspaceId) return [];
+      if (!currentWorkspaceId) {
+        console.log("🔍 Shares query: No workspace ID, returning empty array");
+        return [];
+      }
       const response = await fetch(`/api/shares?workspaceId=${currentWorkspaceId}`);
       if (!response.ok) throw new Error("Failed to fetch shares");
       return response.json();
@@ -234,6 +237,8 @@ export function BookmarkManager() {
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
+
+
 
   const createBookmarkMutation = useMutation({
     mutationFn: async (data: z.infer<typeof bookmarkFormSchema>) => {
@@ -449,7 +454,7 @@ export function BookmarkManager() {
       });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/shares"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shares", currentWorkspaceId] });
     },
   });
 
@@ -458,7 +463,7 @@ export function BookmarkManager() {
       return apiRequest("DELETE", `/api/shares/${id}`);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/shares"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/shares", currentWorkspaceId] });
     },
   });
 
