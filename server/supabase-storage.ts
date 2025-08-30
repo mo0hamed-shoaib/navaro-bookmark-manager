@@ -1,32 +1,34 @@
 import { supabase } from './supabase';
-import type { User, InsertUser, Collection, InsertCollection, Bookmark, InsertBookmark, Workspace } from '@shared/schema';
+import type { User, InsertUser, Space, InsertSpace, Collection, InsertCollection, Bookmark, InsertBookmark, Workspace } from '@shared/schema';
 
 export interface ISupabaseStorage {
   // Workspace operations
   getWorkspace(id: string): Promise<Workspace | undefined>;
   createWorkspace(id: string): Promise<Workspace>;
 
-  // User operations (for compatibility with existing interface)
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
-  
+  // Space operations
+  getSpaces(workspaceId: string): Promise<Space[]>;
+  getSpace(id: string): Promise<Space | undefined>;
+  createSpace(space: InsertSpace): Promise<Space>;
+  updateSpace(id: string, updates: Partial<InsertSpace>): Promise<Space | undefined>;
+  deleteSpace(id: string): Promise<boolean>;
+
   // Collection operations
-  getCollections(userId: string): Promise<Collection[]>;
+  getCollections(spaceId: string): Promise<Collection[]>;
   getCollection(id: string): Promise<Collection | undefined>;
   createCollection(collection: InsertCollection): Promise<Collection>;
   updateCollection(id: string, updates: Partial<InsertCollection>): Promise<Collection | undefined>;
   deleteCollection(id: string): Promise<boolean>;
   
   // Bookmark operations
-  getBookmarks(userId: string, collectionId?: string): Promise<Bookmark[]>;
+  getBookmarks(collectionId?: string): Promise<Bookmark[]>;
   getBookmark(id: string): Promise<Bookmark | undefined>;
   createBookmark(bookmark: InsertBookmark): Promise<Bookmark>;
   updateBookmark(id: string, updates: Partial<InsertBookmark>): Promise<Bookmark | undefined>;
   deleteBookmark(id: string): Promise<boolean>;
-  searchBookmarks(userId: string, query: string): Promise<Bookmark[]>;
-  getPinnedBookmarks(userId: string): Promise<Bookmark[]>;
-  getRecentBookmarks(userId: string, limit?: number): Promise<Bookmark[]>;
+  searchBookmarks(query: string): Promise<Bookmark[]>;
+  getPinnedBookmarks(): Promise<Bookmark[]>;
+  getRecentBookmarks(limit?: number): Promise<Bookmark[]>;
 }
 
 export class SupabaseStorage implements ISupabaseStorage {
@@ -50,6 +52,138 @@ export class SupabaseStorage implements ISupabaseStorage {
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+  }
+
+  // Space operations
+  async getSpaces(workspaceId: string): Promise<Space[]> {
+    try {
+      const { data, error } = await supabase
+        .from('spaces')
+        .select('*')
+        .eq('workspace_id', workspaceId)
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+
+      return data?.map(item => ({
+        id: item.id,
+        workspaceId: item.workspace_id,
+        name: item.name,
+        description: item.description,
+        icon: item.icon,
+        orderIndex: item.order_index.toString(),
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at),
+      })) || [];
+    } catch (error) {
+      console.error('Error fetching spaces:', error);
+      return [];
+    }
+  }
+
+  async getSpace(id: string): Promise<Space | undefined> {
+    try {
+      const { data, error } = await supabase
+        .from('spaces')
+        .select('*')
+        .eq('id', id)
+        .single();
+
+      if (error || !data) return undefined;
+
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        name: data.name,
+        description: data.description,
+        icon: data.icon,
+        orderIndex: data.order_index.toString(),
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    } catch (error) {
+      console.error('Error fetching space:', error);
+      return undefined;
+    }
+  }
+
+  async createSpace(space: InsertSpace): Promise<Space> {
+    try {
+      const { data, error } = await supabase
+        .from('spaces')
+        .insert({
+          workspace_id: space.workspaceId,
+          name: space.name,
+          description: space.description,
+          icon: space.icon,
+          order_index: parseInt(space.orderIndex || '0'),
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        name: data.name,
+        description: data.description,
+        icon: data.icon,
+        orderIndex: data.order_index.toString(),
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    } catch (error) {
+      console.error('Error creating space:', error);
+      throw error;
+    }
+  }
+
+  async updateSpace(id: string, updates: Partial<InsertSpace>): Promise<Space | undefined> {
+    try {
+      const updateData: any = {};
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.icon !== undefined) updateData.icon = updates.icon;
+      if (updates.orderIndex !== undefined) updateData.order_index = parseInt(updates.orderIndex);
+
+      const { data, error } = await supabase
+        .from('spaces')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+        .single();
+
+      if (error || !data) return undefined;
+
+      return {
+        id: data.id,
+        workspaceId: data.workspace_id,
+        name: data.name,
+        description: data.description,
+        icon: data.icon,
+        orderIndex: data.order_index.toString(),
+        createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
+      };
+    } catch (error) {
+      console.error('Error updating space:', error);
+      return undefined;
+    }
+  }
+
+  async deleteSpace(id: string): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('spaces')
+        .delete()
+        .eq('id', id);
+
+      return !error;
+    } catch (error) {
+      console.error('Error deleting space:', error);
+      return false;
+    }
   }
 
   // User operations (simplified for demo)
@@ -84,11 +218,12 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   // Collection operations
-  async getCollections(userId: string): Promise<Collection[]> {
+  async getCollections(spaceId: string): Promise<Collection[]> {
     try {
       const { data, error } = await supabase
         .from('collections')
         .select('*')
+        .eq('space_id', spaceId)
         .order('order_index', { ascending: true });
 
       if (error) throw error;
@@ -96,12 +231,14 @@ export class SupabaseStorage implements ISupabaseStorage {
       // Transform Supabase data to match our schema
       return data?.map(item => ({
         id: item.id,
+        spaceId: item.space_id,
         name: item.name,
         description: item.description,
         icon: item.icon,
-        userId: userId, // Map to demo user for now
-        order: item.order_index.toString(),
+        orderIndex: item.order_index.toString(),
+        viewMode: item.view_mode,
         createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at),
       })) || [];
     } catch (error) {
       console.error('Error fetching collections:', error);
@@ -121,12 +258,14 @@ export class SupabaseStorage implements ISupabaseStorage {
 
       return {
         id: data.id,
+        spaceId: data.space_id,
         name: data.name,
         description: data.description,
         icon: data.icon,
-        userId: this.demoUserId,
-        order: data.order_index.toString(),
+        orderIndex: data.order_index.toString(),
+        viewMode: data.view_mode,
         createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
       };
     } catch (error) {
       console.error('Error fetching collection:', error);
@@ -142,8 +281,9 @@ export class SupabaseStorage implements ISupabaseStorage {
           name: collection.name,
           description: collection.description,
           icon: collection.icon,
-          order_index: parseInt(collection.order || '0'),
-          space_id: '00000000-0000-0000-0000-000000000000', // Default space for now
+          order_index: parseInt(collection.orderIndex || '0'),
+          view_mode: collection.viewMode,
+          space_id: collection.spaceId,
         })
         .select()
         .single();
@@ -152,12 +292,14 @@ export class SupabaseStorage implements ISupabaseStorage {
 
       return {
         id: data.id,
+        spaceId: data.space_id,
         name: data.name,
         description: data.description,
         icon: data.icon,
-        userId: this.demoUserId,
-        order: data.order_index.toString(),
+        orderIndex: data.order_index.toString(),
+        viewMode: data.view_mode,
         createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
       };
     } catch (error) {
       console.error('Error creating collection:', error);
@@ -171,7 +313,8 @@ export class SupabaseStorage implements ISupabaseStorage {
       if (updates.name) updateData.name = updates.name;
       if (updates.description) updateData.description = updates.description;
       if (updates.icon) updateData.icon = updates.icon;
-      if (updates.order) updateData.order_index = parseInt(updates.order);
+      if (updates.orderIndex) updateData.order_index = parseInt(updates.orderIndex);
+      if (updates.viewMode) updateData.view_mode = updates.viewMode;
 
       const { data, error } = await supabase
         .from('collections')
@@ -184,12 +327,14 @@ export class SupabaseStorage implements ISupabaseStorage {
 
       return {
         id: data.id,
+        spaceId: data.space_id,
         name: data.name,
         description: data.description,
         icon: data.icon,
-        userId: this.demoUserId,
-        order: data.order_index.toString(),
+        orderIndex: data.order_index.toString(),
+        viewMode: data.view_mode,
         createdAt: new Date(data.created_at),
+        updatedAt: new Date(data.updated_at),
       };
     } catch (error) {
       console.error('Error updating collection:', error);
@@ -212,7 +357,7 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   // Bookmark operations
-  async getBookmarks(userId: string, collectionId?: string): Promise<Bookmark[]> {
+  async getBookmarks(collectionId?: string): Promise<Bookmark[]> {
     try {
       let query = supabase
         .from('bookmarks')
@@ -235,7 +380,6 @@ export class SupabaseStorage implements ISupabaseStorage {
         favicon: item.favicon,
         preview: item.preview,
         tags: item.tags || [],
-        userId: userId,
         collectionId: item.collection_id,
         isPinned: item.is_pinned,
         createdAt: new Date(item.created_at),
@@ -265,7 +409,6 @@ export class SupabaseStorage implements ISupabaseStorage {
         favicon: data.favicon,
         preview: data.preview,
         tags: data.tags || [],
-        userId: this.demoUserId,
         collectionId: data.collection_id,
         isPinned: data.is_pinned,
         createdAt: new Date(data.created_at),
@@ -304,7 +447,6 @@ export class SupabaseStorage implements ISupabaseStorage {
         favicon: data.favicon,
         preview: data.preview,
         tags: data.tags || [],
-        userId: this.demoUserId,
         collectionId: data.collection_id,
         isPinned: data.is_pinned,
         createdAt: new Date(data.created_at),
@@ -345,7 +487,6 @@ export class SupabaseStorage implements ISupabaseStorage {
         favicon: data.favicon,
         preview: data.preview,
         tags: data.tags || [],
-        userId: this.demoUserId,
         collectionId: data.collection_id,
         isPinned: data.is_pinned,
         createdAt: new Date(data.created_at),
@@ -371,7 +512,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     }
   }
 
-  async searchBookmarks(userId: string, query: string): Promise<Bookmark[]> {
+  async searchBookmarks(query: string): Promise<Bookmark[]> {
     try {
       const { data, error } = await supabase
         .from('bookmarks')
@@ -389,7 +530,6 @@ export class SupabaseStorage implements ISupabaseStorage {
         favicon: item.favicon,
         preview: item.preview,
         tags: item.tags || [],
-        userId: userId,
         collectionId: item.collection_id,
         isPinned: item.is_pinned,
         createdAt: new Date(item.created_at),
@@ -401,7 +541,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     }
   }
 
-  async getPinnedBookmarks(userId: string): Promise<Bookmark[]> {
+  async getPinnedBookmarks(): Promise<Bookmark[]> {
     try {
       const { data, error } = await supabase
         .from('bookmarks')
@@ -419,7 +559,6 @@ export class SupabaseStorage implements ISupabaseStorage {
         favicon: item.favicon,
         preview: item.preview,
         tags: item.tags || [],
-        userId: userId,
         collectionId: item.collection_id,
         isPinned: item.is_pinned,
         createdAt: new Date(item.created_at),
@@ -431,7 +570,7 @@ export class SupabaseStorage implements ISupabaseStorage {
     }
   }
 
-  async getRecentBookmarks(userId: string, limit: number = 10): Promise<Bookmark[]> {
+  async getRecentBookmarks(limit: number = 10): Promise<Bookmark[]> {
     try {
       const { data, error } = await supabase
         .from('bookmarks')
@@ -449,7 +588,6 @@ export class SupabaseStorage implements ISupabaseStorage {
         favicon: item.favicon,
         preview: item.preview,
         tags: item.tags || [],
-        userId: userId,
         collectionId: item.collection_id,
         isPinned: item.is_pinned,
         createdAt: new Date(item.created_at),
