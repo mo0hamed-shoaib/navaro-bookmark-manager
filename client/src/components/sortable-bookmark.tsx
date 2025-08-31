@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger, ContextMenuItem } from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
-import { ExternalLink, Edit, Pin, Trash2, Copy } from "lucide-react";
+import { ExternalLink, Edit, Pin, Trash2, Copy, MoreHorizontal, GripVertical } from "lucide-react";
 import type { Bookmark } from "@shared/schema";
 
 interface SortableBookmarkProps {
@@ -54,6 +54,18 @@ export function SortableBookmark({
     }
   };
 
+  const handleContextMenu = (e: React.MouseEvent, bookmark: Bookmark) => {
+    e.stopPropagation();
+    // Trigger context menu by simulating right-click
+    const rect = e.currentTarget.getBoundingClientRect();
+    const contextMenuEvent = new MouseEvent('contextmenu', {
+      bubbles: true,
+      clientX: rect.left + rect.width / 2,
+      clientY: rect.bottom + 5,
+    });
+    e.currentTarget.dispatchEvent(contextMenuEvent);
+  };
+
   return (
     <div ref={setNodeRef} style={style}>
       <ContextMenu>
@@ -70,8 +82,6 @@ export function SortableBookmark({
             )}
             onClick={handleClick}
             data-testid={`card-bookmark-${bookmark.id}`}
-            {...attributes}
-            {...listeners}
           >
             <CardContent className={cn(
               "p-4 h-full",
@@ -124,37 +134,140 @@ export function SortableBookmark({
                         </div>
                       )}
                     </div>
+                    <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onPin(bookmark);
+                        }}
+                        data-testid={`button-pin-${bookmark.id}`}
+                        title={bookmark.isPinned ? "Unpin" : "Pin"}
+                      >
+                        <Pin className={cn(
+                          "h-3 w-3",
+                          bookmark.isPinned && "fill-current"
+                        )} />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onEdit(bookmark);
+                        }}
+                        data-testid={`button-edit-${bookmark.id}`}
+                        title="Edit"
+                      >
+                        <Edit className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-6 w-6"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleContextMenu(e, bookmark);
+                        }}
+                        data-testid={`button-more-${bookmark.id}`}
+                        title="More"
+                      >
+                        <MoreHorizontal className="h-3 w-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="p-1 h-6 w-6 cursor-grab active:cursor-grabbing"
+                        {...attributes}
+                        {...listeners}
+                        title="Drag to reorder"
+                      >
+                        <GripVertical className="h-3 w-3" />
+                      </Button>
+                    </div>
                   </div>
                 </div>
               )}
 
               {viewMode === "grid2" && (
-                <div className="flex items-center space-x-3 h-full">
+                <div className="flex flex-col h-full justify-center items-center text-center">
                   {bookmark.favicon && (
                     <img 
                       src={bookmark.favicon} 
                       alt="" 
-                      className="w-6 h-6 rounded flex-shrink-0"
+                      className="w-8 h-8 rounded mb-2 flex-shrink-0"
                     />
                   )}
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-medium text-foreground truncate group-hover:text-primary transition-colors text-sm">
-                      {bookmark.title}
-                    </h3>
-                    <p className="text-xs text-muted-foreground truncate">
-                      {new URL(bookmark.url).hostname}
-                    </p>
+                  <h3 className="font-medium text-foreground text-xs truncate group-hover:text-primary transition-colors w-full">
+                    {bookmark.title}
+                  </h3>
+                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity mt-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0.5 h-5 w-5"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPin(bookmark);
+                      }}
+                      data-testid={`button-pin-${bookmark.id}`}
+                      title={bookmark.isPinned ? "Unpin" : "Pin"}
+                    >
+                      <Pin className={cn(
+                        "h-2.5 w-2.5",
+                        bookmark.isPinned && "fill-current"
+                      )} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0.5 h-5 w-5"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(bookmark);
+                      }}
+                      data-testid={`button-edit-${bookmark.id}`}
+                      title="Edit"
+                    >
+                      <Edit className="h-2.5 w-2.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0.5 h-5 w-5"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleContextMenu(e, bookmark);
+                      }}
+                      data-testid={`button-more-${bookmark.id}`}
+                      title="More"
+                    >
+                      <MoreHorizontal className="h-2.5 w-2.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0.5 h-5 w-5 cursor-grab active:cursor-grabbing"
+                      {...attributes}
+                      {...listeners}
+                      title="Drag to reorder"
+                    >
+                      <GripVertical className="h-2.5 w-2.5" />
+                    </Button>
                   </div>
                 </div>
               )}
 
               {viewMode === "list" && (
-                <div className="flex items-center space-x-3 h-full">
+                <div className="flex items-center space-x-4 h-full">
                   {bookmark.favicon && (
                     <img 
                       src={bookmark.favicon} 
                       alt="" 
-                      className="w-8 h-8 rounded flex-shrink-0"
+                      className="w-10 h-10 rounded-lg flex-shrink-0"
                     />
                   )}
                   <div className="flex-1 min-w-0">
@@ -166,83 +279,148 @@ export function SortableBookmark({
                     </p>
                   </div>
                   {bookmark.tags && bookmark.tags.length > 0 && (
-                    <div className="flex items-center space-x-1">
-                      {bookmark.tags.slice(0, 1).map((tag, index) => (
+                    <div className="flex items-center space-x-1 flex-shrink-0">
+                      {bookmark.tags.slice(0, 2).map((tag, index) => (
                         <Badge 
                           key={index} 
                           variant="secondary" 
-                          className="text-xs px-1.5 py-0.5"
+                          className="text-xs"
                         >
                           {tag}
                         </Badge>
                       ))}
+                      {bookmark.tags.length > 2 && (
+                        <Badge variant="outline" className="text-xs">
+                          +{bookmark.tags.length - 2}
+                        </Badge>
+                      )}
                     </div>
                   )}
+                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPin(bookmark);
+                      }}
+                      data-testid={`button-pin-${bookmark.id}`}
+                      title={bookmark.isPinned ? "Unpin" : "Pin"}
+                    >
+                      <Pin className={cn(
+                        "h-3 w-3",
+                        bookmark.isPinned && "fill-current"
+                      )} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(bookmark);
+                      }}
+                      data-testid={`button-edit-${bookmark.id}`}
+                      title="Edit"
+                    >
+                      <Edit className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleContextMenu(e, bookmark);
+                      }}
+                      data-testid={`button-more-${bookmark.id}`}
+                      title="More"
+                    >
+                      <MoreHorizontal className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-1 cursor-grab active:cursor-grabbing"
+                      {...attributes}
+                      {...listeners}
+                      title="Drag to reorder"
+                    >
+                      <GripVertical className="h-3 w-3" />
+                    </Button>
+                  </div>
                 </div>
               )}
 
               {viewMode === "compact" && (
-                <div className="flex flex-col items-center justify-center h-full text-center">
+                <div className="flex flex-col h-full justify-center items-center text-center">
                   {bookmark.favicon && (
                     <img 
                       src={bookmark.favicon} 
                       alt="" 
-                      className="w-8 h-8 rounded mb-2"
+                      className="w-8 h-8 rounded mb-2 flex-shrink-0"
                     />
                   )}
-                  <h3 className="font-medium text-foreground text-xs truncate w-full group-hover:text-primary transition-colors">
+                  <h3 className="font-medium text-foreground text-xs truncate group-hover:text-primary transition-colors w-full">
                     {bookmark.title}
                   </h3>
+                  <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity mt-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0.5 h-5 w-5"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onPin(bookmark);
+                      }}
+                      data-testid={`button-pin-${bookmark.id}`}
+                      title={bookmark.isPinned ? "Unpin" : "Pin"}
+                    >
+                      <Pin className={cn(
+                        "h-2.5 w-2.5",
+                        bookmark.isPinned && "fill-current"
+                      )} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0.5 h-5 w-5"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEdit(bookmark);
+                      }}
+                      data-testid={`button-edit-${bookmark.id}`}
+                      title="Edit"
+                    >
+                      <Edit className="h-2.5 w-2.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0.5 h-5 w-5"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleContextMenu(e, bookmark);
+                      }}
+                      data-testid={`button-more-${bookmark.id}`}
+                      title="More"
+                    >
+                      <MoreHorizontal className="h-2.5 w-2.5" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0.5 h-5 w-5 cursor-grab active:cursor-grabbing"
+                      {...attributes}
+                      {...listeners}
+                      title="Drag to reorder"
+                    >
+                      <GripVertical className="h-2.5 w-2.5" />
+                    </Button>
+                  </div>
                 </div>
               )}
-
-              {/* Action buttons overlay */}
-              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 hover:bg-background/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenUrl(bookmark.url);
-                  }}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 hover:bg-background/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(bookmark);
-                  }}
-                >
-                  <Edit className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 hover:bg-background/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPin(bookmark);
-                  }}
-                >
-                  <Pin className={cn("h-3 w-3", bookmark.isPinned && "fill-current")} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 hover:bg-background/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCopyUrl(bookmark.url);
-                  }}
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
 
               {/* Pin indicator */}
               {bookmark.isPinned && (
@@ -261,21 +439,25 @@ export function SortableBookmark({
           </Card>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem onClick={() => onOpenUrl(bookmark.url)}>
+          <ContextMenuItem onClick={() => window.open(bookmark.url, "_self")}>
             <ExternalLink className="mr-2 h-4 w-4" />
-            Open Link
+            Open
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onCopyUrl(bookmark.url)}>
-            <Copy className="mr-2 h-4 w-4" />
-            Copy URL
+          <ContextMenuItem onClick={() => window.open(bookmark.url, "_blank")}>
+            <ExternalLink className="mr-2 h-4 w-4" />
+            Open in New Tab
+          </ContextMenuItem>
+          <ContextMenuItem onClick={() => onPin(bookmark)}>
+            <Pin className={cn("mr-2 h-4 w-4", bookmark.isPinned && "fill-current")} />
+            {bookmark.isPinned ? "Unpin" : "Pin to Top"}
           </ContextMenuItem>
           <ContextMenuItem onClick={() => onEdit(bookmark)}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onPin(bookmark)}>
-            <Pin className={cn("mr-2 h-4 w-4", bookmark.isPinned && "fill-current")} />
-            {bookmark.isPinned ? "Unpin" : "Pin"}
+          <ContextMenuItem onClick={() => onCopyUrl(bookmark.url)}>
+            <Copy className="mr-2 h-4 w-4" />
+            Copy Link
           </ContextMenuItem>
           <ContextMenuItem onClick={() => onDelete(bookmark.id)}>
             <Trash2 className="mr-2 h-4 w-4" />
