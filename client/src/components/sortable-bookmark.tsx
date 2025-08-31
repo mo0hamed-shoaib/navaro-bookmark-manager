@@ -194,53 +194,61 @@ export function SortableBookmark({
                 </div>
               )}
 
-              {/* Action buttons overlay */}
-              <div className="absolute bottom-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 hover:bg-background/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenUrl(bookmark.url);
-                  }}
-                >
-                  <ExternalLink className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 hover:bg-background/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onEdit(bookmark);
-                  }}
-                >
-                  <Edit className="h-3 w-3" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 hover:bg-background/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onPin(bookmark);
-                  }}
-                >
-                  <Pin className={cn("h-3 w-3", bookmark.isPinned && "fill-current")} />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-6 w-6 p-0 hover:bg-background/80"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onCopyUrl(bookmark.url);
-                  }}
-                >
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
+                                           {/* Action buttons overlay */}
+              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                 <Button
+                   variant="ghost"
+                   size="sm"
+                   className="h-6 w-6 p-0 hover:bg-background/80"
+                   onClick={(e) => {
+                     e.preventDefault();
+                     e.stopPropagation();
+                     console.log('Button clicked: Open URL', bookmark.url);
+                     onOpenUrl(bookmark.url);
+                   }}
+                 >
+                   <ExternalLink className="h-3 w-3" />
+                 </Button>
+                 <Button
+                   variant="ghost"
+                   size="sm"
+                   className="h-6 w-6 p-0 hover:bg-background/80"
+                   onClick={(e) => {
+                     e.preventDefault();
+                     e.stopPropagation();
+                     console.log('Button clicked: Edit', bookmark.id);
+                     onEdit(bookmark);
+                   }}
+                 >
+                   <Edit className="h-3 w-3" />
+                 </Button>
+                 <Button
+                   variant="ghost"
+                   size="sm"
+                   className="h-6 w-6 p-0 hover:bg-background/80"
+                   onClick={(e) => {
+                     e.preventDefault();
+                     e.stopPropagation();
+                     console.log('Button clicked: Pin', bookmark.id);
+                     onPin(bookmark);
+                   }}
+                 >
+                   <Pin className={cn("h-3 w-3", bookmark.isPinned && "fill-current")} />
+                 </Button>
+                 <Button
+                   variant="ghost"
+                   size="sm"
+                   className="h-6 w-6 p-0 hover:bg-background/80"
+                   onClick={(e) => {
+                     e.preventDefault();
+                     e.stopPropagation();
+                     console.log('Button clicked: Copy URL', bookmark.url);
+                     onCopyUrl(bookmark.url);
+                   }}
+                 >
+                   <Copy className="h-3 w-3" />
+                 </Button>
+               </div>
 
               {/* Pin indicator */}
               {bookmark.isPinned && (
