@@ -155,7 +155,7 @@
           "Primary text": "#ffffff",
           "Secondary background": "#c4c4c4",
           "Secondary text": "#1a1a1a",
-          "Accent background": "#ffffff",
+          "Accent background": "#f0f0f0",
           "Accent text": "#1a1a1a",
           "Destructive background": "#000000",
           "Destructive text": "#ffffff"
@@ -168,8 +168,8 @@
         "Containers": {
           "Card background": "#fcfcfc",
           "Card text": "#000000",
-          "Popover background": "#f9f8f5",
-          "Popover text": "#ffffff"
+          "Popover background": "#ffffff",
+          "Popover text": "#1a1a1a"
         },
         "Charts": {
           "Chart 1": "#1e9df1",
@@ -213,7 +213,7 @@
         "Containers": {
           "Card background": "#101011",
           "Card text": "#ffffff",
-          "Popover background": "#f9f8f5",
+          "Popover background": "#1a1a1a",
           "Popover text": "#ffffff"
         },
         "Charts": {
