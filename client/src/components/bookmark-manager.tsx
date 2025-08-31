@@ -21,7 +21,9 @@ import {
   Clock,
   X,
   Download,
-  Upload
+  Upload,
+  Folder,
+  Home
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +72,9 @@ export function BookmarkManager() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Command palette state
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<"date" | "name" | "visits">("date");
   const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
   const [addSpaceOpen, setAddSpaceOpen] = useState(false);
@@ -475,6 +480,101 @@ export function BookmarkManager() {
     } else {
       // Global settings (fallback)
       setSettingsOpen(true);
+    }
+  };
+
+  // Command palette parsing and execution
+  const parseCommand = (query: string) => {
+    const trimmed = query.trim();
+    
+    // Command patterns
+    if (trimmed.startsWith('>')) {
+      return { type: 'command', command: trimmed.slice(1).toLowerCase() };
+    }
+    
+    if (trimmed.startsWith('@')) {
+      return { type: 'navigation', target: trimmed.slice(1).toLowerCase() };
+    }
+    
+    // Default to search
+    return { type: 'search', query: trimmed };
+  };
+
+  const executeCommand = (command: string) => {
+    const parsed = parseCommand(command);
+    
+    switch (parsed.type) {
+      case 'command':
+        switch (parsed.command) {
+          case 'add bookmark':
+          case 'add':
+          case 'new bookmark':
+            setAddBookmarkOpen(true);
+            setSearchOpen(false);
+            break;
+          case 'new collection':
+          case 'add collection':
+            setAddCollectionOpen(true);
+            setSearchOpen(false);
+            break;
+          case 'new space':
+          case 'add space':
+            setAddSpaceOpen(true);
+            setSearchOpen(false);
+            break;
+          case 'export':
+            exportData();
+            setSearchOpen(false);
+            break;
+          case 'import':
+            setImportExportOpen(true);
+            setSearchOpen(false);
+            break;
+          case 'share':
+            setSharesOpen(true);
+            setSearchOpen(false);
+            break;
+          case 'settings':
+            setSettingsOpen(true);
+            setSearchOpen(false);
+            break;
+          default:
+            // Unknown command - treat as search
+            return false;
+        }
+        return true;
+        
+      case 'navigation':
+        // Navigate to space or collection
+        const target = parsed.target;
+        const space = spaces.find(s => s.name.toLowerCase().includes(target));
+        const collection = collections.find(c => c.name.toLowerCase().includes(target));
+        
+        if (space) {
+          setSelectedSpace(space.id);
+          setSelectedCollection(undefined);
+          setSearchOpen(false);
+          return true;
+        }
+        
+        if (collection) {
+          setSelectedCollection(collection.id);
+          setSearchOpen(false);
+          return true;
+        }
+        
+        if (target === 'all' || target === 'home') {
+          setIsAllBookmarksView(true);
+          setSelectedSpace(undefined);
+          setSelectedCollection(undefined);
+          setSearchOpen(false);
+          return true;
+        }
+        
+        return false;
+        
+      default:
+        return false;
     }
   };
 
@@ -1405,7 +1505,7 @@ export function BookmarkManager() {
         </div>
       </SidebarInset>
 
-      {/* Search Dialog */}
+      {/* Enhanced Command Palette */}
       <CommandDialog 
         open={searchOpen} 
         onOpenChange={(open) => {
@@ -1416,53 +1516,185 @@ export function BookmarkManager() {
         }}
       >
         <CommandInput 
-          placeholder="Search bookmarks, collections, tags..." 
+          placeholder="Search bookmarks, use >commands, or @navigate..." 
           value={searchQuery}
           onValueChange={setSearchQuery}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && searchQuery.trim()) {
+              const success = executeCommand(searchQuery);
+              if (success) {
+                setSearchQuery("");
+              }
+            }
+          }}
         />
         <CommandList>
           {(() => {
-            // Use global search for dialog
-            if (searchQuery.trim()) {
-              const filtered = allBookmarks
-                .filter(bookmark => {
-                  const query = searchQuery.toLowerCase();
-                  return bookmark.title.toLowerCase().includes(query) ||
-                         bookmark.url.toLowerCase().includes(query) ||
-                         bookmark.description?.toLowerCase().includes(query) ||
-                         (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(query)));
-                });
-              
-              if (filtered.length === 0) {
-                return <CommandEmpty>No results found.</CommandEmpty>;
-              }
-              
-              const resultsToShow = filtered.slice(0, 10);
-              
+            const query = searchQuery.trim();
+            
+            if (!query) {
               return (
-                <div className="p-2">
-                  <div className="text-sm font-medium text-muted-foreground mb-2">Bookmarks</div>
-                  {resultsToShow.map((bookmark) => (
-                      <div
-                key={bookmark.id}
-                        className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
-                        onClick={() => {
-                  window.open(bookmark.url, "_blank");
-                  setSearchOpen(false);
-                          setSearchQuery(""); // Clear search when selecting
-                }}
-                data-testid={`search-result-${bookmark.id}`}
-              >
-                {bookmark.favicon && (
-                  <img src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
-                )}
-                <span>{bookmark.title}</span>
+                <div className="p-4">
+                  <div className="text-sm font-medium text-muted-foreground mb-3">Quick Actions</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+                         onClick={() => setSearchQuery(">add bookmark")}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      <span>Add Bookmark</span>
+                                             <span className="ml-auto text-xs text-muted-foreground">{'>'}add</span>
+                    </div>
+                    <div className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+                         onClick={() => setSearchQuery(">new collection")}>
+                      <Folder className="w-4 h-4 mr-2" />
+                      <span>New Collection</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{'>'}new collection</span>
+                    </div>
+                    <div className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+                         onClick={() => setSearchQuery(">export")}>
+                      <Download className="w-4 h-4 mr-2" />
+                      <span>Export Data</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{'>'}export</span>
+                    </div>
+                    <div className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+                         onClick={() => setSearchQuery(">share")}>
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      <span>Share Workspace</span>
+                      <span className="ml-auto text-xs text-muted-foreground">{'>'}share</span>
+                    </div>
+                  </div>
+                  
+                  <div className="text-sm font-medium text-muted-foreground mb-3 mt-4">Navigation</div>
+                  <div className="space-y-2">
+                    <div className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+                         onClick={() => setSearchQuery("@all")}>
+                      <Home className="w-4 h-4 mr-2" />
+                      <span>All Bookmarks</span>
+                      <span className="ml-auto text-xs text-muted-foreground">@all</span>
+                    </div>
+                    {spaces.slice(0, 3).map((space) => (
+                      <div key={space.id} 
+                           className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+                           onClick={() => setSearchQuery(`@${space.name.toLowerCase()}`)}>
+                        <span className="w-4 h-4 mr-2 text-sm">{space.icon}</span>
+                        <span>{space.name}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">@{space.name.toLowerCase()}</span>
                       </div>
                     ))}
+                  </div>
                 </div>
               );
             }
-            return <CommandEmpty>Type to search...</CommandEmpty>;
+            
+            // Parse command
+            const parsed = parseCommand(query);
+            
+            // Handle commands
+            if (parsed.type === 'command') {
+              const command = parsed.command;
+              const suggestions = [
+                { cmd: 'add bookmark', label: 'Add Bookmark', icon: Plus },
+                { cmd: 'new collection', label: 'New Collection', icon: Folder },
+                { cmd: 'new space', label: 'New Space', icon: Folder },
+                { cmd: 'export', label: 'Export Data', icon: Download },
+                { cmd: 'import', label: 'Import Data', icon: Upload },
+                { cmd: 'share', label: 'Share Workspace', icon: ExternalLink },
+                { cmd: 'settings', label: 'Settings', icon: Settings }
+              ].filter(s => s.cmd.includes(command));
+              
+              if (suggestions.length > 0) {
+                return (
+                  <div className="p-2">
+                    <div className="text-sm font-medium text-muted-foreground mb-2">Commands</div>
+                    {suggestions.map((suggestion, index) => {
+                      const IconComponent = suggestion.icon;
+                      return (
+                        <div
+                          key={index}
+                          className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+                          onClick={() => {
+                            executeCommand(`>${suggestion.cmd}`);
+                            setSearchQuery("");
+                          }}
+                        >
+                          <IconComponent className="w-4 h-4 mr-2" />
+                          <span>{suggestion.label}</span>
+                          <span className="ml-auto text-xs text-muted-foreground">{'>'}{suggestion.cmd}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              }
+            }
+            
+            // Handle navigation
+            if (parsed.type === 'navigation') {
+              const target = parsed.target;
+              const spaceMatches = spaces.filter(s => s.name.toLowerCase().includes(target));
+              const collectionMatches = collections.filter(c => c.name.toLowerCase().includes(target));
+              const allMatches = [...spaceMatches, ...collectionMatches];
+              
+              if (allMatches.length > 0) {
+                return (
+                  <div className="p-2">
+                    <div className="text-sm font-medium text-muted-foreground mb-2">Navigate to</div>
+                    {allMatches.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+                        onClick={() => {
+                          executeCommand(`@${item.name.toLowerCase()}`);
+                          setSearchQuery("");
+                        }}
+                      >
+                        <span className="w-4 h-4 mr-2 text-sm">{item.icon}</span>
+                        <span>{item.name}</span>
+                        <span className="ml-auto text-xs text-muted-foreground">@{item.name.toLowerCase()}</span>
+                      </div>
+                    ))}
+                  </div>
+                );
+              }
+            }
+            
+            // Default: search bookmarks
+            const filtered = allBookmarks
+              .filter(bookmark => {
+                const queryLower = query.toLowerCase();
+                return bookmark.title.toLowerCase().includes(queryLower) ||
+                       bookmark.url.toLowerCase().includes(queryLower) ||
+                       bookmark.description?.toLowerCase().includes(queryLower) ||
+                       (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(queryLower)));
+              });
+            
+            if (filtered.length === 0) {
+              return <CommandEmpty>No results found.</CommandEmpty>;
+            }
+            
+            const resultsToShow = filtered.slice(0, 10);
+            
+            return (
+              <div className="p-2">
+                <div className="text-sm font-medium text-muted-foreground mb-2">Bookmarks</div>
+                {resultsToShow.map((bookmark) => (
+                  <div
+                    key={bookmark.id}
+                    className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
+                    onClick={() => {
+                      window.open(bookmark.url, "_blank");
+                      setSearchOpen(false);
+                      setSearchQuery("");
+                    }}
+                    data-testid={`search-result-${bookmark.id}`}
+                  >
+                    {bookmark.favicon && (
+                      <img src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
+                    )}
+                    <span>{bookmark.title}</span>
+                  </div>
+                ))}
+              </div>
+            );
           })()}
         </CommandList>
       </CommandDialog>
