@@ -386,7 +386,7 @@ export function BookmarkManager() {
         tags,
         preview
       };
-      return apiRequest("PATCH", `/api/bookmarks/${id}`, bookmarkData);
+      return apiRequest("PUT", `/api/bookmarks/${id}`, bookmarkData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
