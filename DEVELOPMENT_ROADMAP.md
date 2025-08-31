@@ -37,7 +37,7 @@ Building a **free website** that combines:
 ### ❌ **Missing/Incomplete**
 - Advanced search filters (tags, date, domain)
 - CSV export option
-- All remaining 7 UX improvements (3 of 7 completed)
+- All remaining 7 UX improvements (2 of 7 completed, 2 deprecated)
 
 ---
 
@@ -191,20 +191,21 @@ Building a **free website** that combines:
 - [x] Test command functionality
 - [x] Verify no functionality breaks
 
-#### **Phase 4.5: Better Sharing Experience** ⏳
+#### **Phase 4.5: Better Sharing Experience** ❌ (Deprecated)
 **Goal**: Presentation mode for sharing
-- [ ] Create presentation mode UI
-- [ ] Add distraction-free layout
-- [ ] Implement beautiful sharing view
-- [ ] Test presentation mode
-- [ ] Verify no functionality breaks
+- [x] ~~Create presentation mode UI~~ (Not needed - Phase 3.1 already complete)
+- [x] ~~Add distraction-free layout~~ (Not needed - Phase 3.1 already complete)
+- [x] ~~Implement beautiful sharing view~~ (Not needed - Phase 3.1 already complete)
+- [x] ~~Test presentation mode~~ (Not needed - Phase 3.1 already complete)
+- [x] ~~Verify no functionality breaks~~ (Not needed - Phase 3.1 already complete)
+**Note**: Phase 3.1 (View-Only Sharing) already provides complete sharing functionality. This phase was redundant.
 
 #### **Phase 4.6: Split-Screen Grid** ⏳
-**Goal**: Enhanced Grid with drag-between
-- [ ] Implement drag-between collections
-- [ ] Add split-screen layout
-- [ ] Create drag indicators
-- [ ] Test drag functionality
+**Goal**: Enhanced Grid with drag-between collections
+- [ ] Implement drag-between collections (using existing Grid2 view)
+- [ ] Add split-screen layout for multiple collections
+- [ ] Create drag indicators and visual feedback
+- [ ] Test drag functionality across collections
 - [ ] Verify no functionality breaks
 
 #### **Phase 4.7: Smart Tags** ⏳
@@ -350,8 +351,8 @@ shares (
 - [x] No data loss during operations
 
 ### **Phase 4 Success:**
-- [x] 3 of 7 UX improvements work smoothly (Adaptive Views, Command Palette)
-- [ ] Remaining 4 UX improvements pending
+- [x] 2 of 7 UX improvements work smoothly (Adaptive Views, Command Palette)
+- [ ] Remaining 3 UX improvements pending (2 deprecated)
 - [x] Performance remains excellent
 - [x] Accessibility standards met
 
@@ -368,4 +369,4 @@ shares (
 ---
 
 *Last Updated: December 2024*
-*Status: Phase 4.4 Complete - Ready for Phase 4.5 (Better Sharing Experience)*
+*Status: Phase 4.5 Deprecated - Ready for Phase 4.6 (Split-Screen Grid)*
