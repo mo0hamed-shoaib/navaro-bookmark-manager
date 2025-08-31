@@ -91,15 +91,16 @@ Building a **free website** that combines:
 ### **Phase 2: Core Features**
 *Priority: High - Essential Toby-like functionality*
 
-#### **Phase 2.1: Session Save/Restore** 🔄 (To Review)
+#### **Phase 2.1: Session Save/Restore** ❌ (Deprecated)
 **Goal**: Capture and restore browser tabs
-- [x] Create browser bookmarklet for tab capture
-- [x] Implement tab data extraction
-- [x] Add "Save Session" button
-- [x] Create session preview UI
-- [x] Implement selective restore
-- [ ] Test session functionality (Bug reported - sessions not saving)
-- [ ] Verify no functionality breaks
+- [x] ~~Create browser bookmarklet for tab capture~~ (Removed)
+- [x] ~~Implement tab data extraction~~ (Removed)
+- [x] ~~Add "Save Session" button~~ (Removed)
+- [x] ~~Create session preview UI~~ (Removed)
+- [x] ~~Implement selective restore~~ (Removed)
+- [x] ~~Test session functionality~~ (Removed)
+- [x] ~~Verify no functionality breaks~~ (Removed)
+**Note**: Session functionality was removed as it didn't align with user preferences and had technical limitations
 
 #### **Phase 2.2: Advanced Search** ✅
 **Goal**: Global search with filters
@@ -174,13 +175,14 @@ Building a **free website** that combines:
 - [x] Test view switching
 - [x] Verify no functionality breaks
 
-#### **Phase 4.3: Session Restore with Preview** ⏳
+#### **Phase 4.3: Session Restore with Preview** ❌ (Deprecated)
 **Goal**: Better session restoration
-- [ ] Create session preview cards
-- [ ] Add selective restore UI
-- [ ] Implement tab selection
-- [ ] Test preview functionality
-- [ ] Verify no functionality breaks
+- [x] ~~Create session preview cards~~ (Removed)
+- [x] ~~Add selective restore UI~~ (Removed)
+- [x] ~~Implement tab selection~~ (Removed)
+- [x] ~~Test preview functionality~~ (Removed)
+- [x] ~~Verify no functionality breaks~~ (Removed)
+**Note**: Session functionality was completely removed from the project
 
 #### **Phase 4.4: Unified Search + Command Palette** ⏳
 **Goal**: VS Code-style command interface
@@ -368,4 +370,4 @@ shares (
 ---
 
 *Last Updated: December 2024*
-*Status: Phase 4.2 Complete - Ready for Phase 4.3 (Session Restore with Preview)*
+*Status: Phase 4.2 Complete - Ready for Phase 4.4 (Unified Search + Command Palette)*
