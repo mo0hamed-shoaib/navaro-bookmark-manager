@@ -191,6 +191,36 @@ export function BookmarkManager() {
     },
   });
 
+  // Get current collection for adaptive view mode
+  const selectedCollectionData = collections.find(c => c.id === selectedCollection);
+  
+  // Use collection's view mode if available, otherwise use global view mode
+  const effectiveViewMode = selectedCollectionData?.viewMode as ViewMode || viewMode;
+
+  // Function to update collection view mode
+  const updateCollectionViewMode = async (collectionId: string, newViewMode: ViewMode) => {
+    try {
+      const response = await fetch(`/api/collections/${collectionId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          viewMode: newViewMode
+        }),
+      });
+      
+      if (response.ok) {
+        // Refresh collections to get updated view mode
+        queryClient.invalidateQueries({ queryKey: ["/api/collections", currentWorkspaceId] });
+      } else {
+        console.error('Failed to update collection view mode');
+      }
+    } catch (error) {
+      console.error('Error updating collection view mode:', error);
+    }
+  };
+
   const { data: pinnedBookmarks = [] } = useQuery<Bookmark[]>({
     queryKey: ["/api/bookmarks/pinned"],
   });
@@ -838,36 +868,60 @@ export function BookmarkManager() {
             {/* View Mode Toggle */}
             <div className="flex items-center bg-muted rounded-md p-1">
               <Button
-                variant={viewMode === "grid" ? "default" : "ghost"}
+                variant={effectiveViewMode === "grid" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode("grid")}
+                onClick={() => {
+                  if (selectedCollectionData) {
+                    updateCollectionViewMode(selectedCollectionData.id, "grid");
+                  } else {
+                    setViewMode("grid");
+                  }
+                }}
                 data-testid="button-view-grid"
                 title="Grid View"
               >
                 <Grid3X3 className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "grid2" ? "default" : "ghost"}
+                variant={effectiveViewMode === "grid2" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode("grid2")}
+                onClick={() => {
+                  if (selectedCollectionData) {
+                    updateCollectionViewMode(selectedCollectionData.id, "grid2");
+                  } else {
+                    setViewMode("grid2");
+                  }
+                }}
                 data-testid="button-view-grid2"
                 title="2-Column Grid"
               >
                 <LayoutGrid className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
+                variant={effectiveViewMode === "list" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode("list")}
+                onClick={() => {
+                  if (selectedCollectionData) {
+                    updateCollectionViewMode(selectedCollectionData.id, "list");
+                  } else {
+                    setViewMode("list");
+                  }
+                }}
                 data-testid="button-view-list"
                 title="List View"
               >
                 <List className="h-4 w-4" />
               </Button>
               <Button
-                variant={viewMode === "compact" ? "default" : "ghost"}
+                variant={effectiveViewMode === "compact" ? "default" : "ghost"}
                 size="sm"
-                onClick={() => setViewMode("compact")}
+                onClick={() => {
+                  if (selectedCollectionData) {
+                    updateCollectionViewMode(selectedCollectionData.id, "compact");
+                  } else {
+                    setViewMode("compact");
+                  }
+                }}
                 data-testid="button-view-compact"
                 title="Compact View"
               >
@@ -1012,10 +1066,10 @@ export function BookmarkManager() {
           ) : (
             <div className={cn(
               "gap-4",
-              viewMode === "grid" && "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
-              viewMode === "grid2" && "grid grid-cols-1 md:grid-cols-2",
-              viewMode === "list" && "flex flex-col space-y-3",
-              viewMode === "compact" && "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8"
+              effectiveViewMode === "grid" && "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+              effectiveViewMode === "grid2" && "grid grid-cols-1 md:grid-cols-2",
+              effectiveViewMode === "list" && "flex flex-col space-y-3",
+              effectiveViewMode === "compact" && "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8"
             )}>
               {filteredBookmarks.map((bookmark) => (
                 <ContextMenu key={bookmark.id}>
@@ -1024,10 +1078,10 @@ export function BookmarkManager() {
                       className={cn(
                         "hover:shadow-lg transition-all cursor-pointer group relative",
                         selectedBookmarks.has(bookmark.id) && "ring-2 ring-primary",
-                        viewMode === "grid" && "h-64",
-                        viewMode === "grid2" && "h-24",
-                        viewMode === "list" && "h-20",
-                        viewMode === "compact" && "h-24"
+                        effectiveViewMode === "grid" && "h-64",
+                        effectiveViewMode === "grid2" && "h-24",
+                        effectiveViewMode === "list" && "h-20",
+                        effectiveViewMode === "compact" && "h-24"
                       )}
                       onClick={(e) => {
                         if (e.metaKey || e.ctrlKey) {
@@ -1040,9 +1094,9 @@ export function BookmarkManager() {
                     >
                       <CardContent className={cn(
                         "p-4 h-full",
-                        viewMode === "list" && "p-3"
+                        effectiveViewMode === "list" && "p-3"
                       )}>
-                        {viewMode === "grid" && (
+                        {effectiveViewMode === "grid" && (
                           <div className="flex flex-col h-full">
                             {/* Preview Image */}
                             {bookmark.preview?.image && (
@@ -1145,7 +1199,7 @@ export function BookmarkManager() {
                           </div>
                         )}
 
-                        {viewMode === "grid2" && (
+                        {effectiveViewMode === "grid2" && (
                           <div className="flex flex-col h-full justify-center items-center text-center">
                             {bookmark.favicon && (
                               <img 
@@ -1205,7 +1259,7 @@ export function BookmarkManager() {
                           </div>
                         )}
 
-                        {viewMode === "list" && (
+                        {effectiveViewMode === "list" && (
                           <div className="flex items-center space-x-4 h-full">
                             {bookmark.favicon && (
                               <img 
@@ -1288,7 +1342,7 @@ export function BookmarkManager() {
                           </div>
                         )}
 
-                        {viewMode === "compact" && (
+                        {effectiveViewMode === "compact" && (
                           <div className="flex flex-col h-full justify-center items-center text-center">
                             {bookmark.favicon && (
                               <img 
