@@ -953,8 +953,8 @@ export function BookmarkManager() {
 
       <SidebarInset>
         {/* Header */}
-        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2 px-4">
+        <header className="flex h-16 shrink-0 items-center gap-2 px-4 w-full transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2">
             <SidebarTrigger className="-ml-1" />
             <div className="h-4 w-px bg-border" />
             {/* Breadcrumbs */}
@@ -996,7 +996,7 @@ export function BookmarkManager() {
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-md mx-8">
+          <div className="flex-1 max-w-md">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
