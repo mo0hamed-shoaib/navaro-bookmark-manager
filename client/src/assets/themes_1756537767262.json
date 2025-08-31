@@ -96,7 +96,7 @@
         "Background color": "#fffbef",
         "Text color": "#5f471d",
         "Muted background color": "#f7eede",
-        "Muted text color": "#5f471d"
+        "Muted text color": "#3d2f13"
       },
       "Typography": {
         "Sans-serif font": "Lora",
@@ -111,7 +111,7 @@
           "Secondary background": "#5b4824",
           "Secondary text": "#f9dea9",
           "Accent background": "#e6ecd3",
-          "Accent text": "#636e59",
+          "Accent text": "#2d3a1f",
           "Destructive background": "#cb5150",
           "Destructive text": "#ffffff"
         },
