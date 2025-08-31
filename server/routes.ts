@@ -252,9 +252,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Helper function to generate favicon URL
+  function generateFaviconUrl(url: string): string {
+    try {
+      const urlObj = new URL(url);
+      return `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
+    } catch (error) {
+      return `https://www.google.com/s2/favicons?domain=example.com&sz=32`;
+    }
+  }
+
   app.post("/api/bookmarks", async (req, res) => {
     try {
       const data = insertBookmarkSchema.parse(req.body);
+      
+      // Ensure favicon is always provided
+      if (!data.favicon) {
+        data.favicon = generateFaviconUrl(data.url);
+      }
+      
       const bookmark = await storage.createBookmark(data);
       res.status(201).json(bookmark);
     } catch (error) {
@@ -268,6 +284,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.put("/api/bookmarks/:id", async (req, res) => {
     try {
       const updates = insertBookmarkSchema.partial().parse(req.body);
+      
+      // Ensure favicon is always provided if URL is being updated
+      if (updates.url && !updates.favicon) {
+        updates.favicon = generateFaviconUrl(updates.url);
+      }
+      
       const bookmark = await storage.updateBookmark(req.params.id, updates);
       if (!bookmark) {
         return res.status(404).json({ message: "Bookmark not found" });
@@ -377,11 +399,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
             image = new URL(image, baseUrl).href;
           }
 
-          // Enhanced favicon extraction
-          const favicon = $('link[rel="icon"]').attr('href') ||
-                         $('link[rel="shortcut icon"]').attr('href') ||
-                         $('link[rel="apple-touch-icon"]').attr('href') ||
-                         null;
+          // Enhanced favicon extraction with multiple fallbacks
+          let favicon = null;
+          
+          // Try multiple favicon sources in order of preference
+          const faviconSelectors = [
+            'link[rel="icon"][sizes="32x32"]',
+            'link[rel="icon"][sizes="16x16"]',
+            'link[rel="icon"]',
+            'link[rel="shortcut icon"]',
+            'link[rel="apple-touch-icon"][sizes="180x180"]',
+            'link[rel="apple-touch-icon"][sizes="152x152"]',
+            'link[rel="apple-touch-icon"][sizes="144x144"]',
+            'link[rel="apple-touch-icon"][sizes="120x120"]',
+            'link[rel="apple-touch-icon"]',
+            'link[rel="mask-icon"]',
+            'link[rel="fluid-icon"]'
+          ];
+
+          // Try each selector until we find a favicon
+          for (const selector of faviconSelectors) {
+            const faviconElement = $(selector).first();
+            if (faviconElement.length > 0) {
+              favicon = faviconElement.attr('href');
+              break;
+            }
+          }
+
+          // If no favicon found in HTML, try common favicon paths
+          if (!favicon) {
+            const urlObj = new URL(url);
+            const commonFaviconPaths = [
+              `${urlObj.protocol}//${urlObj.hostname}/favicon.ico`,
+              `${urlObj.protocol}//${urlObj.hostname}/apple-touch-icon.png`,
+              `${urlObj.protocol}//${urlObj.hostname}/icon.png`,
+              `${urlObj.protocol}//${urlObj.hostname}/logo.png`,
+              `${urlObj.protocol}//${urlObj.hostname}/touch-icon.png`
+            ];
+            
+            // Use the first common path as fallback
+            favicon = commonFaviconPaths[0];
+          }
 
           // Make favicon URL absolute
           if (favicon && !favicon.startsWith('http')) {
@@ -391,6 +449,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
             if (!image) {
               image = faviconUrl;
             }
+            favicon = faviconUrl;
+          }
+
+          // Final fallback: Google's favicon service
+          if (!favicon) {
+            const urlObj = new URL(url);
+            favicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
           }
 
           const preview = {
@@ -409,13 +474,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (response.status === 403 || response.status === 429) {
             const urlObj = new URL(url);
             const domain = urlObj.hostname;
-            const fallbackImage = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+            const fallbackFavicon = `https://www.google.com/s2/favicons?domain=${domain}&sz=32`;
             
             const preview = {
               title: domain,
               description: `Visit ${domain} (access restricted)`,
-              image: fallbackImage,
-              favicon: fallbackImage
+              image: fallbackFavicon,
+              favicon: fallbackFavicon
             };
             
             return res.json(preview);
@@ -427,12 +492,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // For network errors, still try to provide a favicon
         try {
           const urlObj = new URL(url);
-          const fallbackImage = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
+          const fallbackFavicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
           
           const preview = {
             title: urlObj.hostname,
             description: `Visit ${urlObj.hostname} (network error)`,
-            image: fallbackImage
+            image: fallbackFavicon,
+            favicon: fallbackFavicon
           };
           
           return res.json(preview);
@@ -445,10 +511,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const urlObj = new URL(url);
           
           // Try to generate a fallback image using a service like Google's favicon service
-          let fallbackImage = null;
+          let fallbackFavicon = null;
           try {
             // Use Google's favicon service as a fallback image
-            fallbackImage = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
+            fallbackFavicon = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=32`;
           } catch (error) {
             console.log('Could not generate fallback image:', error instanceof Error ? error.message : 'Unknown error');
           }
@@ -456,7 +522,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const preview = {
             title: urlObj.hostname,
             description: `Visit ${urlObj.hostname}`,
-            image: fallbackImage
+            image: fallbackFavicon,
+            favicon: fallbackFavicon
           };
 
           res.json(preview);
