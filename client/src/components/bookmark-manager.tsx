@@ -77,7 +77,7 @@ export function BookmarkManager() {
   const [selectedCollection, setSelectedCollection] = useState<string | undefined>();
   const [expandedSpaces, setExpandedSpaces] = useState<Set<string>>(new Set());
   const [isAllBookmarksView, setIsAllBookmarksView] = useState(true);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; bookmark: Bookmark } | null>(null);
+
   const [selectedBookmarks, setSelectedBookmarks] = useState<Set<string>>(new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
@@ -177,8 +177,7 @@ export function BookmarkManager() {
       if (selectedCollection) {
         url = `/api/bookmarks?collectionId=${selectedCollection}`;
       } else if (selectedSpace) {
-        // If only space is selected, we'll filter client-side since the API doesn't support space filtering yet
-        url = "/api/bookmarks";
+        url = `/api/bookmarks?spaceId=${selectedSpace}`;
       }
       const response = await fetch(url);
       if (!response.ok) throw new Error("Failed to fetch bookmarks");
@@ -498,12 +497,12 @@ export function BookmarkManager() {
   };
 
   // Filter bookmarks based on selected space and collection
-  const filteredBookmarks = bookmarks;
+  const filteredBookmarks = bookmarks || [];
 
   const togglePin = (bookmark: Bookmark) => {
-    updateBookmarkMutation.mutate({
+    pinBookmarkMutation.mutate({
       id: bookmark.id,
-      data: { isPinned: !bookmark.isPinned } as any,
+      updates: { isPinned: !bookmark.isPinned },
     });
   };
 
@@ -511,10 +510,7 @@ export function BookmarkManager() {
     deleteBookmarkMutation.mutate(id);
   };
 
-  const handleContextMenu = (e: React.MouseEvent, bookmark: Bookmark) => {
-    e.preventDefault();
-    setContextMenu({ x: e.clientX, y: e.clientY, bookmark });
-  };
+
 
   const toggleSpaceExpansion = (spaceId: string) => {
     setExpandedSpaces(prev => {
@@ -572,13 +568,7 @@ export function BookmarkManager() {
     }
   };
 
-  useEffect(() => {
-    const handleClickOutside = () => {
-      setContextMenu(null);
-    };
-    document.addEventListener("click", handleClickOutside);
-    return () => document.removeEventListener("click", handleClickOutside);
-  }, []);
+
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -1006,19 +996,15 @@ export function BookmarkManager() {
                                 >
                                   <Edit className="h-3 w-3" />
                                 </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="p-1 h-6 w-6"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleContextMenu(e, bookmark);
-                                  }}
-                                  data-testid={`button-more-${bookmark.id}`}
-                                  title="More"
-                                >
-                                  <MoreHorizontal className="h-3 w-3" />
-                                </Button>
+                                                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="p-1 h-6 w-6"
+                                data-testid={`button-more-${bookmark.id}`}
+                                title="More"
+                              >
+                                <MoreHorizontal className="h-3 w-3" />
+                              </Button>
                               </div>
                             </div>
                           </div>

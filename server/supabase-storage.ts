@@ -405,15 +405,18 @@ export class SupabaseStorage implements ISupabaseStorage {
   }
 
   // Bookmark operations
-  async getBookmarks(collectionId?: string): Promise<Bookmark[]> {
+  async getBookmarks(collectionId?: string, spaceId?: string): Promise<Bookmark[]> {
     try {
       let query = supabase
         .from('bookmarks')
-        .select('*')
+        .select('*, collections!inner(*)')
         .order('created_at', { ascending: false });
 
       if (collectionId) {
         query = query.eq('collection_id', collectionId);
+      } else if (spaceId) {
+        // Filter by space through collections
+        query = query.eq('collections.space_id', spaceId);
       }
 
       const { data, error } = await query;

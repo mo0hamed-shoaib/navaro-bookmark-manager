@@ -198,7 +198,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/bookmarks", async (req, res) => {
     try {
       const collectionId = req.query.collectionId as string;
-      const bookmarks = await storage.getBookmarks(collectionId);
+      const spaceId = req.query.spaceId as string;
+      const bookmarks = await storage.getBookmarks(collectionId, spaceId);
       res.json(bookmarks);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch bookmarks" });

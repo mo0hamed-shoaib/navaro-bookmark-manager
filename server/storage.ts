@@ -13,7 +13,7 @@ export interface IStorage {
   updateCollection(id: string, updates: Partial<InsertCollection>): Promise<Collection | undefined>;
   deleteCollection(id: string): Promise<boolean>;
   
-  getBookmarks(userId: string, collectionId?: string): Promise<Bookmark[]>;
+  getBookmarks(collectionId?: string, spaceId?: string): Promise<Bookmark[]>;
   getBookmark(id: string): Promise<Bookmark | undefined>;
   createBookmark(bookmark: InsertBookmark): Promise<Bookmark>;
   updateBookmark(id: string, updates: Partial<InsertBookmark>): Promise<Bookmark | undefined>;
