@@ -202,6 +202,7 @@ export function SortableBookmark({
                    className="h-6 w-6 p-0 hover:bg-background/80"
                    onClick={(e) => {
                      e.stopPropagation();
+                     console.log('OPEN URL CLICKED:', bookmark.url);
                      onOpenUrl(bookmark.url);
                    }}
                  >
@@ -259,7 +260,10 @@ export function SortableBookmark({
           </Card>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem onClick={() => onOpenUrl(bookmark.url)}>
+          <ContextMenuItem onClick={() => {
+            console.log('CONTEXT MENU OPEN URL:', bookmark.url);
+            onOpenUrl(bookmark.url);
+          }}>
             <ExternalLink className="mr-2 h-4 w-4" />
             Open Link
           </ContextMenuItem>
