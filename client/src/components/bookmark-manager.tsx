@@ -82,6 +82,36 @@ import { ShareDialog } from "@/components/share-dialog";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { SortableBookmark } from "@/components/sortable-bookmark";
 
+// Favicon component with fallback
+const Favicon = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true);
+      // Fallback to Google's favicon service
+      try {
+        const url = new URL(src);
+        const fallbackSrc = `https://www.google.com/s2/favicons?domain=${url.hostname}&sz=32`;
+        setImgSrc(fallbackSrc);
+      } catch (error) {
+        // If URL parsing fails, use a default favicon
+        setImgSrc("https://www.google.com/s2/favicons?domain=example.com&sz=32");
+      }
+    }
+  };
+
+  return (
+    <img 
+      src={imgSrc} 
+      alt={alt} 
+      className={className}
+      onError={handleError}
+    />
+  );
+};
+
 const bookmarkFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
   url: z.string().url("Please enter a valid URL"),
@@ -1473,7 +1503,7 @@ export function BookmarkManager() {
                     data-testid={`search-result-${bookmark.id}`}
                   >
                     {bookmark.favicon && (
-                      <img src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
+                      <Favicon src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
                     )}
                     <span>{bookmark.title}</span>
                   </div>

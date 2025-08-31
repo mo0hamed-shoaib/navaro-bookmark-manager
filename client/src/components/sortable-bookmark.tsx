@@ -8,6 +8,37 @@ import { ContextMenu, ContextMenuContent, ContextMenuTrigger, ContextMenuItem } 
 import { cn } from "@/lib/utils";
 import { ExternalLink, Edit, Pin, Trash2, Copy, MoreHorizontal, GripVertical } from "lucide-react";
 import type { Bookmark } from "@shared/schema";
+import { useState } from "react";
+
+// Favicon component with fallback
+const Favicon = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true);
+      // Fallback to Google's favicon service
+      try {
+        const url = new URL(src);
+        const fallbackSrc = `https://www.google.com/s2/favicons?domain=${url.hostname}&sz=32`;
+        setImgSrc(fallbackSrc);
+      } catch (error) {
+        // If URL parsing fails, use a default favicon
+        setImgSrc("https://www.google.com/s2/favicons?domain=example.com&sz=32");
+      }
+    }
+  };
+
+  return (
+    <img 
+      src={imgSrc} 
+      alt={alt} 
+      className={className}
+      onError={handleError}
+    />
+  );
+};
 
 interface SortableBookmarkProps {
   bookmark: Bookmark;
@@ -102,7 +133,7 @@ export function SortableBookmark({
                   {/* Content */}
                   <div className="flex items-start space-x-3 flex-1">
                     {bookmark.favicon && (
-                      <img 
+                      <Favicon 
                         src={bookmark.favicon} 
                         alt="" 
                         className="w-8 h-8 rounded flex-shrink-0"
@@ -195,7 +226,7 @@ export function SortableBookmark({
               {viewMode === "grid2" && (
                 <div className="flex flex-col h-full justify-center items-center text-center">
                   {bookmark.favicon && (
-                    <img 
+                    <Favicon 
                       src={bookmark.favicon} 
                       alt="" 
                       className="w-8 h-8 rounded mb-2 flex-shrink-0"
@@ -264,7 +295,7 @@ export function SortableBookmark({
               {viewMode === "list" && (
                 <div className="flex items-center space-x-4 h-full">
                   {bookmark.favicon && (
-                    <img 
+                    <Favicon 
                       src={bookmark.favicon} 
                       alt="" 
                       className="w-10 h-10 rounded-lg flex-shrink-0"
@@ -356,7 +387,7 @@ export function SortableBookmark({
               {viewMode === "compact" && (
                 <div className="flex flex-col h-full justify-center items-center text-center">
                   {bookmark.favicon && (
-                    <img 
+                    <Favicon 
                       src={bookmark.favicon} 
                       alt="" 
                       className="w-8 h-8 rounded mb-2 flex-shrink-0"

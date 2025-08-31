@@ -39,6 +39,37 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import type { Space, Collection, Bookmark } from "@shared/schema"
+import { useState } from "react";
+
+// Favicon component with fallback
+const Favicon = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
+  const [imgSrc, setImgSrc] = useState(src);
+  const [hasError, setHasError] = useState(false);
+
+  const handleError = () => {
+    if (!hasError) {
+      setHasError(true);
+      // Fallback to Google's favicon service
+      try {
+        const url = new URL(src);
+        const fallbackSrc = `https://www.google.com/s2/favicons?domain=${url.hostname}&sz=32`;
+        setImgSrc(fallbackSrc);
+      } catch (error) {
+        // If URL parsing fails, use a default favicon
+        setImgSrc("https://www.google.com/s2/favicons?domain=example.com&sz=32");
+      }
+    }
+  };
+
+  return (
+    <img 
+      src={imgSrc} 
+      alt={alt} 
+      className={className}
+      onError={handleError}
+    />
+  );
+};
 
 interface BookmarkSidebarProps {
   spaces: Space[]
@@ -184,7 +215,7 @@ export function BookmarkSidebar({
                          >
                            <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer" title={bookmark.title}>
                              {bookmark.favicon && (
-                               <img src={bookmark.favicon} className="w-4 h-4 rounded flex-shrink-0" alt="" />
+                               <Favicon src={bookmark.favicon} className="w-4 h-4 rounded flex-shrink-0" alt="" />
                              )}
                              <span>{bookmark.title}</span>
                            </a>
@@ -220,7 +251,7 @@ export function BookmarkSidebar({
                          >
                            <a href={bookmark.url} target="_blank" rel="noopener noreferrer" className="cursor-pointer" title={bookmark.title}>
                              {bookmark.favicon && (
-                               <img src={bookmark.favicon} className="w-4 h-4 rounded flex-shrink-0" alt="" />
+                               <Favicon src={bookmark.favicon} className="w-4 h-4 rounded flex-shrink-0" alt="" />
                              )}
                              <span>{bookmark.title}</span>
                            </a>
