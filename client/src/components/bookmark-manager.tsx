@@ -953,8 +953,9 @@ export function BookmarkManager() {
 
       <SidebarInset>
         {/* Header */}
-        <header className="flex h-16 shrink-0 items-center gap-2 px-4 w-full transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          <div className="flex items-center gap-2">
+        <header className="flex h-16 shrink-0 items-center px-4 w-full transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+          {/* Left section: Sidebar trigger + Breadcrumbs */}
+          <div className="flex items-center gap-2 flex-shrink-0">
             <SidebarTrigger className="-ml-1" />
             <div className="h-4 w-px bg-border" />
             {/* Breadcrumbs */}
@@ -995,9 +996,9 @@ export function BookmarkManager() {
             </nav>
           </div>
 
-          {/* Search Bar */}
-          <div className="flex-1 max-w-md">
-            <div className="relative">
+          {/* Center section: Search Bar */}
+          <div className="flex-1 flex justify-center px-8">
+            <div className="relative w-full max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
               <Input
                 placeholder="Search bookmarks, collections, tags..."
@@ -1009,8 +1010,8 @@ export function BookmarkManager() {
             </div>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center space-x-3">
+          {/* Right section: Actions */}
+          <div className="flex items-center space-x-3 flex-shrink-0">
             {/* View Mode Toggle */}
             <div className="flex items-center bg-muted rounded-md p-1">
               <Button

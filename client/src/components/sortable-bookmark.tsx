@@ -195,7 +195,7 @@ export function SortableBookmark({
               )}
 
               {/* Action buttons overlay */}
-              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute bottom-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <Button
                   variant="ghost"
                   size="sm"
@@ -259,23 +259,43 @@ export function SortableBookmark({
           </Card>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem onClick={() => onOpenUrl(bookmark.url)}>
+          <ContextMenuItem onClick={(e) => {
+            e.preventDefault();
+            console.log('Opening URL:', bookmark.url);
+            onOpenUrl(bookmark.url);
+          }}>
             <ExternalLink className="mr-2 h-4 w-4" />
             Open Link
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onCopyUrl(bookmark.url)}>
+          <ContextMenuItem onClick={(e) => {
+            e.preventDefault();
+            console.log('Copying URL:', bookmark.url);
+            onCopyUrl(bookmark.url);
+          }}>
             <Copy className="mr-2 h-4 w-4" />
             Copy URL
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onEdit(bookmark)}>
+          <ContextMenuItem onClick={(e) => {
+            e.preventDefault();
+            console.log('Editing bookmark:', bookmark.id);
+            onEdit(bookmark);
+          }}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onPin(bookmark)}>
+          <ContextMenuItem onClick={(e) => {
+            e.preventDefault();
+            console.log('Toggling pin for bookmark:', bookmark.id);
+            onPin(bookmark);
+          }}>
             <Pin className={cn("mr-2 h-4 w-4", bookmark.isPinned && "fill-current")} />
             {bookmark.isPinned ? "Unpin" : "Pin"}
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onDelete(bookmark.id)}>
+          <ContextMenuItem onClick={(e) => {
+            e.preventDefault();
+            console.log('Deleting bookmark:', bookmark.id);
+            onDelete(bookmark.id);
+          }}>
             <MoreHorizontal className="mr-2 h-4 w-4" />
             Delete
           </ContextMenuItem>
