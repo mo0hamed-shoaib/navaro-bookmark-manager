@@ -653,6 +653,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Import/Export routes
+  app.post("/api/import", async (req, res) => {
+    try {
+      const { workspaceId, importData } = req.body;
+      
+      if (!workspaceId) {
+        return res.status(400).json({ message: "Workspace ID is required" });
+      }
+
+      if (!importData || !importData.spaces || !importData.collections || !importData.bookmarks) {
+        return res.status(400).json({ message: "Invalid import data format" });
+      }
+
+      // Import spaces
+      const importedSpaces = [];
+      for (const spaceData of importData.spaces) {
+        try {
+          const space = await storage.createSpace({
+            workspaceId,
+            name: spaceData.name,
+            description: spaceData.description || "",
+            icon: spaceData.icon || "📁",
+            orderIndex: spaceData.orderIndex || "0"
+          });
+          importedSpaces.push(space);
+        } catch (error) {
+          console.error(`Error importing space ${spaceData.name}:`, error);
+        }
+      }
+
+      // Import collections
+      const importedCollections = [];
+      for (const collectionData of importData.collections) {
+        try {
+          // Find the corresponding space by name (since IDs will be different)
+          const targetSpace = importedSpaces.find(s => s.name === collectionData.spaceName);
+          
+          if (targetSpace) {
+            const collection = await storage.createCollection({
+              spaceId: targetSpace.id,
+              name: collectionData.name,
+              description: collectionData.description || "",
+              icon: collectionData.icon || "📁",
+              orderIndex: collectionData.orderIndex || "0",
+              viewMode: collectionData.viewMode || "grid"
+            });
+            importedCollections.push(collection);
+          }
+        } catch (error) {
+          console.error(`Error importing collection ${collectionData.name}:`, error);
+        }
+      }
+
+      // Import bookmarks
+      const importedBookmarks = [];
+      for (const bookmarkData of importData.bookmarks) {
+        try {
+          // Find the corresponding collection by name
+          const targetCollection = importedCollections.find(c => c.name === bookmarkData.collectionName);
+          
+          if (targetCollection) {
+            const bookmark = await storage.createBookmark({
+              collectionId: targetCollection.id,
+              title: bookmarkData.title,
+              url: bookmarkData.url,
+              description: bookmarkData.description || "",
+              favicon: bookmarkData.favicon || "",
+              preview: bookmarkData.preview || null,
+              tags: bookmarkData.tags || [],
+              isPinned: bookmarkData.isPinned || false
+            });
+            importedBookmarks.push(bookmark);
+          }
+        } catch (error) {
+          console.error(`Error importing bookmark ${bookmarkData.title}:`, error);
+        }
+      }
+
+      res.status(200).json({
+        message: "Import completed successfully",
+        imported: {
+          spaces: importedSpaces.length,
+          collections: importedCollections.length,
+          bookmarks: importedBookmarks.length
+        }
+      });
+    } catch (error) {
+      console.error("Import error:", error);
+      res.status(500).json({ message: "Failed to import data" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -600,10 +600,22 @@ export function BookmarkManager() {
 
   // Import/Export functions
   const exportData = () => {
+    // Prepare collections with space information
+    const collectionsWithSpace = collections.map(collection => ({
+      ...collection,
+      spaceName: spaces.find(s => s.id === collection.spaceId)?.name || "Unknown Space"
+    }));
+
+    // Prepare bookmarks with collection information
+    const bookmarksWithCollection = allBookmarks.map(bookmark => ({
+      ...bookmark,
+      collectionName: collections.find(c => c.id === bookmark.collectionId)?.name || "Unknown Collection"
+    }));
+
     const exportData = {
       spaces,
-      collections,
-      bookmarks: allBookmarks,
+      collections: collectionsWithSpace,
+      bookmarks: bookmarksWithCollection,
       exportDate: new Date().toISOString(),
       version: "1.0"
     };
@@ -629,19 +641,39 @@ export function BookmarkManager() {
         throw new Error('Invalid import file format');
       }
       
-      // TODO: Implement actual import logic
-      // This would involve:
-      // 1. Creating new spaces/collections
-      // 2. Importing bookmarks
-      // 3. Handling conflicts
-      // 4. Updating the UI
+      if (!currentWorkspaceId) {
+        throw new Error('No workspace available for import');
+      }
       
-      console.log('Import data:', data);
-      alert('Import functionality will be implemented in the next step');
+      // Send import data to backend
+      const response = await fetch('/api/import', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          workspaceId: currentWorkspaceId,
+          importData: data
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Import failed');
+      }
+      
+      const result = await response.json();
+      
+      // Refresh all data
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces", currentWorkspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/collections", currentWorkspaceId] });
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
+      
+      alert(`Import completed successfully!\nImported: ${result.imported.spaces} spaces, ${result.imported.collections} collections, ${result.imported.bookmarks} bookmarks`);
       
     } catch (error) {
       console.error('Import error:', error);
-      alert('Failed to import data. Please check the file format.');
+      alert(`Failed to import data: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 
