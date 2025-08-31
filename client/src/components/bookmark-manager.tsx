@@ -1516,7 +1516,7 @@ export function BookmarkManager() {
 
       {/* Add Bookmark Dialog */}
       <Dialog open={addBookmarkOpen} onOpenChange={setAddBookmarkOpen}>
-        <DialogContent className="max-w-md" data-testid="dialog-add-bookmark">
+        <DialogContent data-testid="dialog-add-bookmark">
           <DialogHeader>
             <DialogTitle>Add New Bookmark</DialogTitle>
           </DialogHeader>
@@ -1674,7 +1674,7 @@ export function BookmarkManager() {
 
       {/* Edit Bookmark Dialog */}
       <Dialog open={editBookmarkOpen} onOpenChange={setEditBookmarkOpen}>
-        <DialogContent className="max-w-md" data-testid="dialog-edit-bookmark">
+        <DialogContent data-testid="dialog-edit-bookmark">
           <DialogHeader>
             <DialogTitle>Edit Bookmark</DialogTitle>
           </DialogHeader>
