@@ -1672,6 +1672,56 @@ export function BookmarkManager() {
                   </FormItem>
                 )}
               />
+              
+              {/* Preview Image Section */}
+              <div className="space-y-3">
+                <FormField
+                  control={form.control}
+                  name="previewMode"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-2">
+                        Preview Image
+                        <span className="text-xs text-muted-foreground">
+                          (Auto works for most sites, Manual for blocked sites)
+                        </span>
+                      </FormLabel>
+                      <Select onValueChange={field.onChange} value={field.value}>
+                        <FormControl>
+                          <SelectTrigger data-testid="select-edit-preview-mode">
+                            <SelectValue placeholder="Select preview mode" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="auto">Auto-extract from website</SelectItem>
+                          <SelectItem value="manual">Manual URL</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                
+                <FormField
+                  control={form.control}
+                  name="previewImage"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Preview Image URL (Optional)</FormLabel>
+                      <FormControl>
+                        <Input 
+                          placeholder="https://example.com/image.jpg" 
+                          {...field} 
+                          data-testid="input-edit-preview-image"
+                          disabled={form.watch("previewMode") === "auto"}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              
               <FormField
                 control={form.control}
                 name="collectionId"
@@ -1687,7 +1737,6 @@ export function BookmarkManager() {
                       <SelectContent>
                         {collections.map((collection) => (
                           <SelectItem key={collection.id} value={collection.id}>
-                            {React.createElement(getIconComponent(collection.icon || "folder"), { className: "w-4 h-4 mr-2" })}
                             {collection.name}
                           </SelectItem>
                         ))}
