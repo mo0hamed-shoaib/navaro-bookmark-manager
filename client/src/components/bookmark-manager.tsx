@@ -357,7 +357,35 @@ export function BookmarkManager() {
   const updateBookmarkMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: z.infer<typeof bookmarkFormSchema> }) => {
       const tags = data.tags ? data.tags.split(",").map(tag => tag.trim()).filter(Boolean) : [];
-      const bookmarkData = { ...data, tags };
+      
+      // Handle preview based on mode
+      let preview = null;
+      
+      if (data.previewMode === "manual" && data.previewImage) {
+        // Use manual preview image
+        preview = {
+          title: data.title,
+          description: data.description || `Visit ${new URL(data.url).hostname}`,
+          image: data.previewImage
+        };
+      } else if (data.previewMode === "auto") {
+        // Try to fetch basic preview data
+        try {
+          const response = await fetch(`/api/bookmark-preview?url=${encodeURIComponent(data.url)}`);
+          if (response.ok) {
+            const previewData = await response.json();
+            preview = previewData;
+          }
+        } catch (error) {
+          console.log('Could not extract preview:', error);
+        }
+      }
+      
+      const bookmarkData = { 
+        ...data, 
+        tags,
+        preview
+      };
       return apiRequest("PATCH", `/api/bookmarks/${id}`, bookmarkData);
     },
     onSuccess: () => {
