@@ -111,6 +111,7 @@ export function BookmarkManager() {
   const [selectedCollection, setSelectedCollection] = useState<string | undefined>();
   const [expandedSpaces, setExpandedSpaces] = useState<Set<string>>(new Set());
   const [isAllBookmarksView, setIsAllBookmarksView] = useState(true);
+  const [suggestedTags, setSuggestedTags] = useState<string[]>([]);
 
   const [selectedBookmarks, setSelectedBookmarks] = useState<Set<string>>(new Set());
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -1483,7 +1484,26 @@ export function BookmarkManager() {
                   <FormItem>
                     <FormLabel>URL</FormLabel>
                     <FormControl>
-                      <Input placeholder="https://example.com" {...field} data-testid="input-bookmark-url" />
+                      <Input 
+                        placeholder="https://example.com" 
+                        {...field} 
+                        data-testid="input-bookmark-url"
+                        onBlur={async () => {
+                          if (field.value && field.value.startsWith('http')) {
+                            try {
+                              const response = await fetch(`/api/bookmark-preview?url=${encodeURIComponent(field.value)}`);
+                              if (response.ok) {
+                                const preview = await response.json();
+                                if (preview.suggestedTags) {
+                                  setSuggestedTags(preview.suggestedTags);
+                                }
+                              }
+                            } catch (error) {
+                              console.log('Could not fetch preview for smart tags');
+                            }
+                          }
+                        }}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -1511,6 +1531,30 @@ export function BookmarkManager() {
                     <FormControl>
                       <Input placeholder="tag1, tag2, tag3" {...field} data-testid="input-bookmark-tags" />
                     </FormControl>
+                    {/* Smart Tag Suggestions */}
+                    {suggestedTags.length > 0 && (
+                      <div className="mt-2">
+                        <p className="text-xs text-muted-foreground mb-2">Suggested tags:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {suggestedTags.map((tag, index) => (
+                            <Badge
+                              key={index}
+                              variant="outline"
+                              className="cursor-pointer hover:bg-primary hover:text-primary-foreground text-xs"
+                              onClick={() => {
+                                const currentTags = field.value ? field.value.split(',').map(t => t.trim()) : [];
+                                if (!currentTags.includes(tag)) {
+                                  const newTags = [...currentTags, tag];
+                                  field.onChange(newTags.join(', '));
+                                }
+                              }}
+                            >
+                              + {tag}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <FormMessage />
                   </FormItem>
                 )}

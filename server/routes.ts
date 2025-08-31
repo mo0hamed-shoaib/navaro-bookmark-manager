@@ -7,6 +7,104 @@ import fetch from "node-fetch";
 import { AbortController } from "abort-controller";
 import * as cheerio from "cheerio";
 
+// Smart tag generation function (100% local, no APIs)
+function generateSmartTags(domain: string, path: string, title: string, description: string): string[] {
+  const tags: Set<string> = new Set();
+  
+  // Domain-based categorization
+  const domainLower = domain.toLowerCase();
+  
+  // Development tools
+  if (domainLower.includes('github.com') || domainLower.includes('gitlab.com') || domainLower.includes('bitbucket.org')) {
+    tags.add('development');
+    tags.add('git');
+  }
+  if (domainLower.includes('stackoverflow.com') || domainLower.includes('stackexchange.com')) {
+    tags.add('development');
+    tags.add('qa');
+  }
+  if (domainLower.includes('npmjs.com') || domainLower.includes('yarnpkg.com')) {
+    tags.add('development');
+    tags.add('package-manager');
+  }
+  
+  // Design tools
+  if (domainLower.includes('figma.com') || domainLower.includes('sketch.com') || domainLower.includes('adobe.com')) {
+    tags.add('design');
+    tags.add('ui');
+  }
+  if (domainLower.includes('dribbble.com') || domainLower.includes('behance.net')) {
+    tags.add('design');
+    tags.add('inspiration');
+  }
+  
+  // Documentation
+  if (path.includes('/docs') || path.includes('/documentation') || domainLower.includes('docs.')) {
+    tags.add('documentation');
+  }
+  if (domainLower.includes('readme.io') || domainLower.includes('gitbook.com')) {
+    tags.add('documentation');
+  }
+  
+  // Social media
+  if (domainLower.includes('twitter.com') || domainLower.includes('x.com')) {
+    tags.add('social');
+    tags.add('twitter');
+  }
+  if (domainLower.includes('linkedin.com')) {
+    tags.add('social');
+    tags.add('professional');
+  }
+  if (domainLower.includes('youtube.com')) {
+    tags.add('video');
+    tags.add('tutorial');
+  }
+  
+  // News and blogs
+  if (domainLower.includes('medium.com') || domainLower.includes('substack.com')) {
+    tags.add('blog');
+    tags.add('article');
+  }
+  if (domainLower.includes('news.') || domainLower.includes('techcrunch.com')) {
+    tags.add('news');
+  }
+  
+  // E-commerce
+  if (domainLower.includes('amazon.com') || domainLower.includes('shopify.com')) {
+    tags.add('shopping');
+    tags.add('ecommerce');
+  }
+  
+  // Keyword extraction from title and description
+  const text = `${title} ${description}`.toLowerCase();
+  
+  // Common keywords
+  const keywords = [
+    'api', 'tutorial', 'guide', 'how-to', 'example', 'demo', 'template',
+    'framework', 'library', 'tool', 'utility', 'plugin', 'extension',
+    'mobile', 'web', 'desktop', 'cloud', 'server', 'database',
+    'javascript', 'typescript', 'react', 'vue', 'angular', 'node',
+    'python', 'java', 'c++', 'c#', 'php', 'ruby', 'go', 'rust',
+    'css', 'html', 'sql', 'mongodb', 'postgresql', 'mysql',
+    'docker', 'kubernetes', 'aws', 'azure', 'gcp', 'firebase'
+  ];
+  
+  keywords.forEach(keyword => {
+    if (text.includes(keyword)) {
+      tags.add(keyword);
+    }
+  });
+  
+  // Path-based tags
+  if (path.includes('/api/')) tags.add('api');
+  if (path.includes('/blog/')) tags.add('blog');
+  if (path.includes('/tutorial/')) tags.add('tutorial');
+  if (path.includes('/docs/')) tags.add('documentation');
+  
+  // Limit to top 5 most relevant tags
+  return Array.from(tags).slice(0, 5);
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Workspace routes for Magic Link System
   app.post("/api/workspaces", async (req, res) => {
@@ -363,6 +461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
                             $('meta[name="description"]').attr('content') ||
                             `Visit ${new URL(url).hostname}`;
 
+          // Enhanced image extraction with quality assessment
           let image = $('meta[property="og:image"]').attr('content') ||
                      $('meta[name="twitter:image"]').attr('content') ||
                      $('meta[name="twitter:image:src"]').attr('content') ||
@@ -374,10 +473,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
             image = new URL(image, baseUrl).href;
           }
 
+          // Enhanced favicon extraction
+          const favicon = $('link[rel="icon"]').attr('href') ||
+                         $('link[rel="shortcut icon"]').attr('href') ||
+                         $('link[rel="apple-touch-icon"]').attr('href') ||
+                         null;
+
+          // Make favicon URL absolute
+          if (favicon && !favicon.startsWith('http')) {
+            const baseUrl = new URL(url);
+            const faviconUrl = new URL(favicon, baseUrl).href;
+            // If no image found, use favicon as fallback
+            if (!image) {
+              image = faviconUrl;
+            }
+          }
+
+          // Smart tag generation
+          const urlObj = new URL(url);
+          const domain = urlObj.hostname;
+          const path = urlObj.pathname;
+          
+          const suggestedTags = generateSmartTags(domain, path, title, description);
+
           const preview = {
             title: title.trim(),
             description: description.trim(),
-            image: image
+            image: image,
+            favicon: favicon ? (favicon.startsWith('http') ? favicon : new URL(favicon, new URL(url)).href) : null,
+            suggestedTags: suggestedTags
           };
 
           console.log('Extracted preview:', preview);
@@ -388,12 +512,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // For 403/429 errors, try to get at least a favicon
           if (response.status === 403 || response.status === 429) {
             const urlObj = new URL(url);
-            const fallbackImage = `https://www.google.com/s2/favicons?domain=${urlObj.hostname}&sz=128`;
+            const domain = urlObj.hostname;
+            const fallbackImage = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+            
+            // Generate smart tags even for restricted access
+            const suggestedTags = generateSmartTags(domain, urlObj.pathname, domain, `Visit ${domain} (access restricted)`);
             
             const preview = {
-              title: urlObj.hostname,
-              description: `Visit ${urlObj.hostname} (access restricted)`,
-              image: fallbackImage
+              title: domain,
+              description: `Visit ${domain} (access restricted)`,
+              image: fallbackImage,
+              favicon: fallbackImage,
+              suggestedTags: suggestedTags
             };
             
             return res.json(preview);
