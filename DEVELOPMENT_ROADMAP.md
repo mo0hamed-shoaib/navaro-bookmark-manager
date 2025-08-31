@@ -166,13 +166,13 @@ Building a **free website** that combines:
 - [x] ~~Verify no functionality breaks~~ (Removed)
 **Note**: Feature was removed as it didn't align with user preferences
 
-#### **Phase 4.2: Adaptive Views** ⏳
+#### **Phase 4.2: Adaptive Views** ✅
 **Goal**: Per-collection view settings
-- [ ] Add view mode per collection
-- [ ] Create view mode selector
-- [ ] Implement view persistence
-- [ ] Test view switching
-- [ ] Verify no functionality breaks
+- [x] Add view mode per collection
+- [x] Create view mode selector
+- [x] Implement view persistence
+- [x] Test view switching
+- [x] Verify no functionality breaks
 
 #### **Phase 4.3: Session Restore with Preview** ⏳
 **Goal**: Better session restoration
@@ -368,4 +368,4 @@ shares (
 ---
 
 *Last Updated: December 2024*
-*Status: Phase 3.2 Complete - Ready for Phase 4.1 (Quick Capture Mode)*
+*Status: Phase 4.2 Complete - Ready for Phase 4.3 (Session Restore with Preview)*
