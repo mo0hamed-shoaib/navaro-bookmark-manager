@@ -1581,6 +1581,7 @@ export function BookmarkManager() {
                       <SelectContent>
                         {collections.map((collection) => (
                           <SelectItem key={collection.id} value={collection.id}>
+                            {React.createElement(getIconComponent(collection.icon || "folder"), { className: "w-4 h-4 mr-2" })}
                             {collection.name}
                           </SelectItem>
                         ))}
@@ -1686,7 +1687,7 @@ export function BookmarkManager() {
                       <SelectContent>
                         {collections.map((collection) => (
                           <SelectItem key={collection.id} value={collection.id}>
-                            <span className="mr-2">{collection.icon}</span>
+                            {React.createElement(getIconComponent(collection.icon || "folder"), { className: "w-4 h-4 mr-2" })}
                             {collection.name}
                           </SelectItem>
                         ))}
