@@ -200,12 +200,14 @@ Building a **free website** that combines:
 - [x] ~~Verify no functionality breaks~~ (Not needed - Phase 3.1 already complete)
 **Note**: Phase 3.1 (View-Only Sharing) already provides complete sharing functionality. This phase was redundant.
 
-#### **Phase 4.6: Split-Screen Grid** ⏳
-**Goal**: Enhanced Grid with drag-between collections
-- [ ] Implement drag-between collections (using existing Grid2 view)
-- [ ] Add split-screen layout for multiple collections
-- [ ] Create drag indicators and visual feedback
-- [ ] Test drag functionality across collections
+#### **Phase 4.6: Universal Drag & Drop Reordering** ⏳
+**Goal**: Manual organization across all view modes with custom sort preservation
+- [ ] Add order_index to bookmarks database schema
+- [ ] Implement universal drag reordering for all view modes
+- [ ] Add "Custom" sort option to sort dropdown
+- [ ] Enhance bulk selection with working "Move" functionality
+- [ ] Add manual bulk selection (checkbox per bookmark)
+- [ ] Test drag functionality and sort persistence
 - [ ] Verify no functionality breaks
 
 #### **Phase 4.7: Smart Tags** ⏳
@@ -369,4 +371,4 @@ shares (
 ---
 
 *Last Updated: December 2024*
-*Status: Phase 4.5 Deprecated - Ready for Phase 4.6 (Split-Screen Grid)*
+*Status: Phase 4.5 Deprecated - Ready for Phase 4.6 (Universal Drag & Drop Reordering)*
