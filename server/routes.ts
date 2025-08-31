@@ -294,13 +294,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Reorder bookmarks endpoint
   app.post("/api/bookmarks/reorder", async (req, res) => {
     try {
+      console.log("=== REORDER REQUEST RECEIVED ===");
+      console.log("Request body:", req.body);
+      
       const { collectionId, bookmarkIds } = req.body;
       
       if (!collectionId || !Array.isArray(bookmarkIds)) {
+        console.log("Invalid request data:", { collectionId, bookmarkIds });
         return res.status(400).json({ message: "collectionId and bookmarkIds array are required" });
       }
 
+      console.log("Calling storage.reorderBookmarks with:", { collectionId, bookmarkIds });
       const reorderedBookmarks = await storage.reorderBookmarks(collectionId, bookmarkIds);
+      console.log("Reorder completed, returning:", reorderedBookmarks.length, "bookmarks");
       res.json(reorderedBookmarks);
     } catch (error) {
       console.error("Error reordering bookmarks:", error);
