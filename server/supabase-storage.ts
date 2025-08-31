@@ -593,22 +593,22 @@ export class SupabaseStorage implements ISupabaseStorage {
         throw new Error('Invalid bookmark collection');
       }
 
-      // Update order_index for each bookmark individually
-      console.log('Starting individual updates...');
+      // Simple direct update approach
+      console.log('Using simple direct update approach...');
+      
       for (let i = 0; i < bookmarkIds.length; i++) {
         const bookmarkId = bookmarkIds[i];
         const newOrderIndex = i;
         
         console.log(`Updating bookmark ${bookmarkId} to order_index ${newOrderIndex}`);
         
+        // Try the simplest possible update
         const { error: updateError } = await supabase
           .from('bookmarks')
           .update({ 
-            order_index: newOrderIndex,
-            updated_at: new Date().toISOString()
+            order_index: newOrderIndex
           })
-          .eq('id', bookmarkId)
-          .eq('collection_id', collectionId);
+          .eq('id', bookmarkId);
 
         if (updateError) {
           console.error(`Error updating bookmark ${bookmarkId}:`, updateError);
