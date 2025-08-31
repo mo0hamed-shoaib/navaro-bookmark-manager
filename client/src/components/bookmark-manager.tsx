@@ -68,6 +68,7 @@ export function BookmarkManager() {
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<"date" | "name" | "visits">("date");
   const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
   const [addSpaceOpen, setAddSpaceOpen] = useState(false);
   const [addCollectionOpen, setAddCollectionOpen] = useState(false);
@@ -496,8 +497,34 @@ export function BookmarkManager() {
     }
   };
 
-  // Filter bookmarks based on selected space and collection
-  const filteredBookmarks = bookmarks || [];
+  // Filter and sort bookmarks based on selected space, collection, and sort option
+  const filteredBookmarks = React.useMemo(() => {
+    let sortedBookmarks = [...(bookmarks || [])];
+    
+    // Sort bookmarks based on the selected sort option
+    switch (sortBy) {
+      case "date":
+        sortedBookmarks.sort((a, b) => {
+          const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return dateB - dateA;
+        });
+        break;
+      case "name":
+        sortedBookmarks.sort((a, b) => a.title.localeCompare(b.title));
+        break;
+      case "visits":
+        // For now, we'll sort by updatedAt as a proxy for visits since we don't have visit tracking yet
+        sortedBookmarks.sort((a, b) => {
+          const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
+          const dateB = b.updatedAt ? new Date(b.updatedAt).getTime() : 0;
+          return dateB - dateA;
+        });
+        break;
+    }
+    
+    return sortedBookmarks;
+  }, [bookmarks, sortBy]);
 
   const togglePin = (bookmark: Bookmark) => {
     pinBookmarkMutation.mutate({
@@ -860,7 +887,7 @@ export function BookmarkManager() {
                   </div>
                 )}
               </div>
-              <Select defaultValue="date">
+              <Select value={sortBy} onValueChange={(value: "date" | "name" | "visits") => setSortBy(value)}>
                 <SelectTrigger className="w-48" data-testid="select-sort">
                   <SelectValue />
                 </SelectTrigger>
@@ -1000,6 +1027,17 @@ export function BookmarkManager() {
                                 variant="ghost"
                                 size="sm"
                                 className="p-1 h-6 w-6"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  // Trigger context menu by simulating right-click
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  const contextMenuEvent = new MouseEvent('contextmenu', {
+                                    bubbles: true,
+                                    clientX: rect.left + rect.width / 2,
+                                    clientY: rect.bottom + 5,
+                                  });
+                                  e.currentTarget.dispatchEvent(contextMenuEvent);
+                                }}
                                 data-testid={`button-more-${bookmark.id}`}
                                 title="More"
                               >
