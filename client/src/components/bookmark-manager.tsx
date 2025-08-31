@@ -19,7 +19,9 @@ import {
   ChevronRight,
   CheckSquare,
   Clock,
-  X
+  X,
+  Download,
+  Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,6 +90,7 @@ export function BookmarkManager() {
   const [sessionsOpen, setSessionsOpen] = useState(false);
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [sharesOpen, setSharesOpen] = useState(false);
+  const [importExportOpen, setImportExportOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
 
@@ -595,7 +598,52 @@ export function BookmarkManager() {
     }
   };
 
+  // Import/Export functions
+  const exportData = () => {
+    const exportData = {
+      spaces,
+      collections,
+      bookmarks: allBookmarks,
+      exportDate: new Date().toISOString(),
+      version: "1.0"
+    };
+    
+    const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `bookmarks-export-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
+  const importData = async (file: File) => {
+    try {
+      const text = await file.text();
+      const data = JSON.parse(text);
+      
+      // Validate the import data structure
+      if (!data.spaces || !data.collections || !data.bookmarks) {
+        throw new Error('Invalid import file format');
+      }
+      
+      // TODO: Implement actual import logic
+      // This would involve:
+      // 1. Creating new spaces/collections
+      // 2. Importing bookmarks
+      // 3. Handling conflicts
+      // 4. Updating the UI
+      
+      console.log('Import data:', data);
+      alert('Import functionality will be implemented in the next step');
+      
+    } catch (error) {
+      console.error('Import error:', error);
+      alert('Failed to import data. Please check the file format.');
+    }
+  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -864,6 +912,35 @@ export function BookmarkManager() {
                 >
                   <CheckSquare className="h-4 w-4 mr-2" />
                   {selectedBookmarks.size === filteredBookmarks.length ? "Deselect All" : "Select All"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={exportData}
+                  data-testid="button-export"
+                >
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = (e) => {
+                      const file = (e.target as HTMLInputElement).files?.[0];
+                      if (file) {
+                        importData(file);
+                      }
+                    };
+                    input.click();
+                  }}
+                  data-testid="button-import"
+                >
+                  <Upload className="h-4 w-4 mr-2" />
+                  Import
                 </Button>
                 {selectedBookmarks.size > 0 && (
                   <div className="flex items-center space-x-2">
