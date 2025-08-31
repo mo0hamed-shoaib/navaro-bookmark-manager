@@ -91,8 +91,6 @@ export function BookmarkManager() {
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [sharesOpen, setSharesOpen] = useState(false);
   const [importExportOpen, setImportExportOpen] = useState(false);
-  const [quickCaptureOpen, setQuickCaptureOpen] = useState(false);
-  const [inboxCollectionId, setInboxCollectionId] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
 
@@ -175,49 +173,7 @@ export function BookmarkManager() {
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
 
-  // Create or find Inbox collection
-  useEffect(() => {
-    const createInboxCollection = async () => {
-      if (!currentWorkspaceId || !spaces.length || !collections.length) return;
-      
-      // Look for existing Inbox collection
-      const existingInbox = collections.find(c => c.name === "Inbox");
-      if (existingInbox) {
-        setInboxCollectionId(existingInbox.id);
-        return;
-      }
-      
-      // Create Inbox collection in the first space
-      try {
-        const firstSpace = spaces[0];
-        const response = await fetch('/api/collections', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            spaceId: firstSpace.id,
-            name: "Inbox",
-            description: "Quick capture collection for temporary bookmarks",
-            icon: "📥",
-            orderIndex: "0",
-            viewMode: "compact"
-          }),
-        });
-        
-        if (response.ok) {
-          const newInbox = await response.json();
-          setInboxCollectionId(newInbox.id);
-          // Refresh collections
-          queryClient.invalidateQueries({ queryKey: ["/api/collections", currentWorkspaceId] });
-        }
-      } catch (error) {
-        console.error('Failed to create Inbox collection:', error);
-      }
-    };
-    
-    createInboxCollection();
-  }, [currentWorkspaceId, spaces, collections, queryClient]);
+
 
   // Get filtered bookmarks for current view
   const { data: bookmarks = [] } = useQuery<Bookmark[]>({
@@ -735,45 +691,7 @@ export function BookmarkManager() {
     }
   };
 
-  // Quick capture function
-  const quickCapture = async (url: string, title?: string) => {
-    if (!inboxCollectionId) {
-      alert('Inbox collection not available. Please try again.');
-      return;
-    }
 
-    try {
-      // Extract title from URL if not provided
-      const bookmarkTitle = title || new URL(url).hostname;
-      
-      // Create bookmark in Inbox
-      const response = await fetch('/api/bookmarks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          collectionId: inboxCollectionId,
-          title: bookmarkTitle,
-          url: url,
-          description: `Quick capture: ${bookmarkTitle}`,
-          tags: ['quick-capture'],
-          previewMode: 'auto'
-        }),
-      });
-      
-      if (response.ok) {
-        // Refresh bookmarks
-        queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
-        alert(`Bookmark saved to Inbox: ${bookmarkTitle}`);
-      } else {
-        throw new Error('Failed to save bookmark');
-      }
-    } catch (error) {
-      console.error('Quick capture error:', error);
-      alert(`Failed to save bookmark: ${error instanceof Error ? error.message : 'Unknown error'}`);
-    }
-  };
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -876,7 +794,7 @@ export function BookmarkManager() {
                 <>
                   <span>/</span>
                   <button 
-                    onClick={() => {
+                  onClick={() => {
                       setSelectedSpace(currentSpace.id);
                       setSelectedCollection(undefined);
                     }}
@@ -889,10 +807,10 @@ export function BookmarkManager() {
               )}
               {currentCollection && (
                 <>
-                  <span>/</span>
-                  <span className="text-foreground font-medium">
+              <span>/</span>
+              <span className="text-foreground font-medium">
                     {currentCollection.name}
-                  </span>
+              </span>
                 </>
               )}
               {!currentSpace && !currentCollection && (
@@ -917,18 +835,6 @@ export function BookmarkManager() {
 
           {/* Actions */}
           <div className="flex items-center space-x-3">
-            {/* Quick Capture Button */}
-            <Button
-              variant="default"
-              size="sm"
-              onClick={() => setQuickCaptureOpen(true)}
-              className="bg-primary text-primary-foreground hover:bg-primary/90"
-              title="Quick Capture - Save current page to Inbox"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Quick Capture
-            </Button>
-            
             {/* View Mode Toggle */}
             <div className="flex items-center bg-muted rounded-md p-1">
               <Button
@@ -1214,12 +1120,12 @@ export function BookmarkManager() {
                                 >
                                   <Edit className="h-3 w-3" />
                                 </Button>
-                                                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="p-1 h-6 w-6"
-                                onClick={(e) => {
-                                  e.stopPropagation();
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="p-1 h-6 w-6"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
                                   // Trigger context menu by simulating right-click
                                   const rect = e.currentTarget.getBoundingClientRect();
                                   const contextMenuEvent = new MouseEvent('contextmenu', {
@@ -1228,12 +1134,12 @@ export function BookmarkManager() {
                                     clientY: rect.bottom + 5,
                                   });
                                   e.currentTarget.dispatchEvent(contextMenuEvent);
-                                }}
-                                data-testid={`button-more-${bookmark.id}`}
-                                title="More"
-                              >
-                                <MoreHorizontal className="h-3 w-3" />
-                              </Button>
+                                  }}
+                                  data-testid={`button-more-${bookmark.id}`}
+                                  title="More"
+                                >
+                                  <MoreHorizontal className="h-3 w-3" />
+                                </Button>
                               </div>
                             </div>
                           </div>
@@ -1538,19 +1444,19 @@ export function BookmarkManager() {
                   <div className="text-sm font-medium text-muted-foreground mb-2">Bookmarks</div>
                   {resultsToShow.map((bookmark) => (
                       <div
-                        key={bookmark.id}
+                key={bookmark.id}
                         className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
                         onClick={() => {
-                          window.open(bookmark.url, "_blank");
-                          setSearchOpen(false);
+                  window.open(bookmark.url, "_blank");
+                  setSearchOpen(false);
                           setSearchQuery(""); // Clear search when selecting
-                        }}
-                        data-testid={`search-result-${bookmark.id}`}
-                      >
-                        {bookmark.favicon && (
-                          <img src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
-                        )}
-                        <span>{bookmark.title}</span>
+                }}
+                data-testid={`search-result-${bookmark.id}`}
+              >
+                {bookmark.favicon && (
+                  <img src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
+                )}
+                <span>{bookmark.title}</span>
                       </div>
                     ))}
                 </div>
@@ -1988,8 +1894,8 @@ export function BookmarkManager() {
               </div>
             </div>
           </div>
-              </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
 
     {/* Add Space Dialog */}
     <AddSpaceDialog
@@ -2052,58 +1958,7 @@ export function BookmarkManager() {
       isLoadingShares={isLoadingShares}
     />
 
-    {/* Quick Capture Dialog */}
-    <Dialog open={quickCaptureOpen} onOpenChange={setQuickCaptureOpen}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Quick Capture</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="text-sm text-muted-foreground">
-            Save the current page to your Inbox for later organization.
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">URL</label>
-            <Input
-              placeholder="https://example.com"
-              id="quick-capture-url"
-              defaultValue=""
-            />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Title (optional)</label>
-            <Input
-              placeholder="Page title"
-              id="quick-capture-title"
-              defaultValue=""
-            />
-          </div>
-          <div className="flex justify-end space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => setQuickCaptureOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                const url = (document.getElementById('quick-capture-url') as HTMLInputElement)?.value;
-                const title = (document.getElementById('quick-capture-title') as HTMLInputElement)?.value;
-                
-                if (url) {
-                  quickCapture(url, title || undefined);
-                  setQuickCaptureOpen(false);
-                } else {
-                  alert('Please enter a URL');
-                }
-              }}
-            >
-              Save to Inbox
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
-    </Dialog>
+    
   </SidebarProvider>
   );
 }
