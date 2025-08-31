@@ -23,7 +23,12 @@ import {
   Download,
   Upload,
   Folder,
-  Home
+  Home,
+  Briefcase,
+  Heart,
+  Star,
+  Zap,
+  Target
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -482,6 +487,21 @@ export function BookmarkManager() {
       setSettingsOpen(true);
     }
   };
+
+  // Helper function to get icon component based on icon name
+  const getIconComponent = (iconName?: string) => {
+    switch (iconName) {
+      case 'home': return Home
+      case 'briefcase': return Briefcase
+      case 'heart': return Heart
+      case 'star': return Star
+      case 'zap': return Zap
+      case 'target': return Target
+      case 'bookmark': return BookmarkIcon
+      case 'clock': return Clock
+      default: return Folder
+    }
+  }
 
   // Command palette parsing and execution
   const parseCommand = (query: string) => {
@@ -1575,7 +1595,7 @@ export function BookmarkManager() {
                       <div key={space.id} 
                            className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
                            onClick={() => setSearchQuery(`@${space.name.toLowerCase()}`)}>
-                        <span className="w-4 h-4 mr-2 text-sm">{space.icon}</span>
+                        {React.createElement(getIconComponent(space.icon), { className: "w-4 h-4 mr-2" })}
                         <span>{space.name}</span>
                         <span className="ml-auto text-xs text-muted-foreground">@{space.name.toLowerCase()}</span>
                       </div>
@@ -1647,7 +1667,7 @@ export function BookmarkManager() {
                           setSearchQuery("");
                         }}
                       >
-                        <span className="w-4 h-4 mr-2 text-sm">{item.icon}</span>
+                        {React.createElement(getIconComponent(item.icon), { className: "w-4 h-4 mr-2" })}
                         <span>{item.name}</span>
                         <span className="ml-auto text-xs text-muted-foreground">@{item.name.toLowerCase()}</span>
                       </div>
