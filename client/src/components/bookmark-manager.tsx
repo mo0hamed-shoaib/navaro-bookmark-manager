@@ -889,6 +889,8 @@ export function BookmarkManager() {
         description: editingBookmark.description || "",
         collectionId: editingBookmark.collectionId || "",
         tags: editingBookmark.tags?.join(", ") || "",
+        previewImage: editingBookmark.preview?.image || "",
+        previewMode: editingBookmark.preview?.image ? "manual" : "auto",
       });
     }
   }, [editBookmarkOpen, editingBookmark, form]);
@@ -1581,7 +1583,6 @@ export function BookmarkManager() {
                       <SelectContent>
                         {collections.map((collection) => (
                           <SelectItem key={collection.id} value={collection.id}>
-                            {React.createElement(getIconComponent(collection.icon || "folder"), { className: "w-4 h-4 mr-2" })}
                             {collection.name}
                           </SelectItem>
                         ))}
