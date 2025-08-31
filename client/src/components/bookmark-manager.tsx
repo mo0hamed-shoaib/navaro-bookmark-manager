@@ -1,5 +1,25 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  horizontalListSortingStrategy,
+} from '@dnd-kit/sortable';
+import {
+  useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { 
   Search, 
   Plus, 
@@ -60,6 +80,7 @@ import { EditCollectionDialog } from "@/components/edit-collection-dialog";
 
 import { ShareDialog } from "@/components/share-dialog";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
+import { SortableBookmark } from "@/components/sortable-bookmark";
 
 const bookmarkFormSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -80,7 +101,7 @@ export function BookmarkManager() {
   
   // Command palette state
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<"date" | "name" | "visits">("date");
+  const [sortBy, setSortBy] = useState<"date" | "name" | "visits" | "custom">("date");
   const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
   const [addSpaceOpen, setAddSpaceOpen] = useState(false);
   const [addCollectionOpen, setAddCollectionOpen] = useState(false);
@@ -102,6 +123,14 @@ export function BookmarkManager() {
   const [importExportOpen, setImportExportOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
+
+  // Drag and drop sensors
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  );
 
   // Initialize workspace on component mount
   useEffect(() => {
@@ -357,6 +386,15 @@ export function BookmarkManager() {
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks/pinned"] });
       queryClient.invalidateQueries({ queryKey: ["/api/bookmarks/recent"] });
+    },
+  });
+
+  const reorderBookmarksMutation = useMutation({
+    mutationFn: async ({ collectionId, bookmarkIds }: { collectionId: string; bookmarkIds: string[] }) => {
+      return apiRequest("POST", "/api/bookmarks/reorder", { collectionId, bookmarkIds });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/bookmarks"] });
     },
   });
 
@@ -625,6 +663,10 @@ export function BookmarkManager() {
           return dateB - dateA;
         });
         break;
+      case "custom":
+        // Use orderIndex for custom sorting (manual organization)
+        sortedBookmarks.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
+        break;
     }
     
     return sortedBookmarks;
@@ -639,6 +681,33 @@ export function BookmarkManager() {
 
   const deleteBookmark = (id: string) => {
     deleteBookmarkMutation.mutate(id);
+  };
+
+  const reorderBookmarks = (bookmarkIds: string[]) => {
+    if (!selectedCollection) return;
+    
+    // Set sort to custom when reordering
+    setSortBy("custom");
+    
+    reorderBookmarksMutation.mutate({
+      collectionId: selectedCollection,
+      bookmarkIds,
+    });
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (active.id !== over?.id) {
+      const oldIndex = filteredBookmarks.findIndex(bookmark => bookmark.id === active.id);
+      const newIndex = filteredBookmarks.findIndex(bookmark => bookmark.id === over?.id);
+
+      if (oldIndex !== -1 && newIndex !== -1) {
+        const newOrder = arrayMove(filteredBookmarks, oldIndex, newIndex);
+        const bookmarkIds = newOrder.map(bookmark => bookmark.id);
+        reorderBookmarks(bookmarkIds);
+      }
+    }
   };
 
 
@@ -1107,7 +1176,7 @@ export function BookmarkManager() {
                   </div>
                 )}
               </div>
-              <Select value={sortBy} onValueChange={(value: "date" | "name" | "visits") => setSortBy(value)}>
+              <Select value={sortBy} onValueChange={(value: "date" | "name" | "visits" | "custom") => setSortBy(value)}>
                 <SelectTrigger className="w-48" data-testid="select-sort">
                   <SelectValue />
                 </SelectTrigger>
@@ -1115,6 +1184,7 @@ export function BookmarkManager() {
                   <SelectItem value="date">Sort by Date Added</SelectItem>
                   <SelectItem value="name">Sort by Name</SelectItem>
                   <SelectItem value="visits">Sort by Most Visited</SelectItem>
+                  <SelectItem value="custom">Custom Order</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -1133,100 +1203,50 @@ export function BookmarkManager() {
               </Button>
             </div>
           ) : (
-            <div className={cn(
-              "gap-4",
-              effectiveViewMode === "grid" && "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
-              effectiveViewMode === "grid2" && "grid grid-cols-1 md:grid-cols-2",
-              effectiveViewMode === "list" && "flex flex-col space-y-3",
-              effectiveViewMode === "compact" && "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8"
-            )}>
-              {filteredBookmarks.map((bookmark) => (
-                <ContextMenu key={bookmark.id}>
-                  <ContextMenuTrigger>
-                    <Card 
-                      className={cn(
-                        "hover:shadow-lg transition-all cursor-pointer group relative",
-                        selectedBookmarks.has(bookmark.id) && "ring-2 ring-primary",
-                        effectiveViewMode === "grid" && "h-64",
-                        effectiveViewMode === "grid2" && "h-24",
-                        effectiveViewMode === "list" && "h-20",
-                        effectiveViewMode === "compact" && "h-24"
-                      )}
-                      onClick={(e) => {
-                        if (e.metaKey || e.ctrlKey) {
-                          toggleSelectBookmark(bookmark.id);
-                        } else {
-                          window.open(bookmark.url, "_blank");
-                        }
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              <SortableContext
+                items={filteredBookmarks.map(bookmark => bookmark.id)}
+                strategy={
+                  effectiveViewMode === "list" 
+                    ? verticalListSortingStrategy 
+                    : horizontalListSortingStrategy
+                }
+              >
+                <div className={cn(
+                  "gap-4",
+                  effectiveViewMode === "grid" && "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
+                  effectiveViewMode === "grid2" && "grid grid-cols-1 md:grid-cols-2",
+                  effectiveViewMode === "list" && "flex flex-col space-y-3",
+                  effectiveViewMode === "compact" && "grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8"
+                )}>
+                  {filteredBookmarks.map((bookmark) => (
+                    <SortableBookmark
+                      key={bookmark.id}
+                      bookmark={bookmark}
+                      viewMode={effectiveViewMode}
+                      isSelected={selectedBookmarks.has(bookmark.id)}
+                      onToggleSelect={toggleSelectBookmark}
+                      onEdit={(bookmark) => {
+                        setEditingBookmark(bookmark);
+                        setEditBookmarkOpen(true);
                       }}
-                      data-testid={`card-bookmark-${bookmark.id}`}
-                    >
-                      <CardContent className={cn(
-                        "p-4 h-full",
-                        effectiveViewMode === "list" && "p-3"
-                      )}>
-                        {effectiveViewMode === "grid" && (
-                          <div className="flex flex-col h-full">
-                            {/* Preview Image */}
-                            {bookmark.preview?.image && (
-                              <div className="w-full h-32 bg-muted rounded-lg mb-3 overflow-hidden">
-                                <img 
-                                  src={bookmark.preview.image} 
-                                  alt="" 
-                                  className="w-full h-full object-cover"
-                                />
-                              </div>
-                            )}
-                            {/* Content */}
-                            <div className="flex items-start space-x-3 flex-1">
-                              {bookmark.favicon && (
-                                <img 
-                                  src={bookmark.favicon} 
-                                  alt="" 
-                                  className="w-8 h-8 rounded flex-shrink-0"
-                                />
-                              )}
-                              <div className="flex-1 min-w-0">
-                                <h3 className="font-medium text-foreground truncate group-hover:text-primary transition-colors text-sm">
-                                  {bookmark.title}
-                                </h3>
-                                <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
-                                  {bookmark.description || new URL(bookmark.url).hostname}
-                                </p>
-                                {bookmark.tags && bookmark.tags.length > 0 && (
-                                  <div className="flex items-center space-x-1 mt-2 flex-wrap gap-1">
-                                    {bookmark.tags.slice(0, 2).map((tag, index) => (
-                                      <Badge 
-                                        key={index} 
-                                        variant="secondary" 
-                                        className="text-xs px-1.5 py-0.5"
-                                      >
-                                        {tag}
-                                      </Badge>
-                                    ))}
-                                    {bookmark.tags.length > 2 && (
-                                      <Badge variant="outline" className="text-xs px-1.5 py-0.5">
-                                        +{bookmark.tags.length - 2}
-                                      </Badge>
-                                    )}
-                                  </div>
-                                )}
-                              </div>
-                              <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="p-1 h-6 w-6"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    togglePin(bookmark);
-                                  }}
-                                  data-testid={`button-pin-${bookmark.id}`}
-                                  title={bookmark.isPinned ? "Unpin" : "Pin"}
-                                >
-                                  <Pin className={cn(
-                                    "h-3 w-3",
-                                    bookmark.isPinned && "fill-current"
+                      onDelete={deleteBookmark}
+                      onPin={togglePin}
+                      onCopyUrl={(url) => {
+                        navigator.clipboard.writeText(url);
+                      }}
+                      onOpenUrl={(url) => {
+                        window.open(url, "_blank");
+                      }}
+                    />
+                  ))}
+                </div>
+              </SortableContext>
+            </DndContext>
                                   )} />
                                 </Button>
                                 <Button
