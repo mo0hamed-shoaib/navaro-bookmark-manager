@@ -291,6 +291,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Reorder bookmarks endpoint
+  app.post("/api/bookmarks/reorder", async (req, res) => {
+    try {
+      const { collectionId, bookmarkIds } = req.body;
+      
+      if (!collectionId || !Array.isArray(bookmarkIds)) {
+        return res.status(400).json({ message: "collectionId and bookmarkIds array are required" });
+      }
+
+      const reorderedBookmarks = await storage.reorderBookmarks(collectionId, bookmarkIds);
+      res.json(reorderedBookmarks);
+    } catch (error) {
+      console.error("Error reordering bookmarks:", error);
+      res.status(500).json({ message: "Failed to reorder bookmarks" });
+    }
+  });
+
   // Bookmark preview endpoint
   app.get("/api/bookmark-preview", async (req, res) => {
     try {

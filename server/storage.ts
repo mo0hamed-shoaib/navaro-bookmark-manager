@@ -18,6 +18,7 @@ export interface IStorage {
   createBookmark(bookmark: InsertBookmark): Promise<Bookmark>;
   updateBookmark(id: string, updates: Partial<InsertBookmark>): Promise<Bookmark | undefined>;
   deleteBookmark(id: string): Promise<boolean>;
+  reorderBookmarks(collectionId: string, bookmarkIds: string[]): Promise<Bookmark[]>;
   searchBookmarks(userId: string, query: string): Promise<Bookmark[]>;
   getPinnedBookmarks(userId: string): Promise<Bookmark[]>;
   getRecentBookmarks(userId: string, limit?: number): Promise<Bookmark[]>;

@@ -55,6 +55,7 @@ export const bookmarks = pgTable("bookmarks", {
   tags: text("tags").array(),
   collectionId: varchar("collection_id").notNull().references(() => collections.id, { onDelete: "cascade" }),
   isPinned: boolean("is_pinned").default(false),
+  orderIndex: integer("order_index").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -105,6 +106,7 @@ export const insertBookmarkSchema = createInsertSchema(bookmarks).pick({
   tags: true,
   collectionId: true,
   isPinned: true,
+  orderIndex: true,
 });
 
 export const insertWorkspaceSchema = createInsertSchema(workspaces).pick({

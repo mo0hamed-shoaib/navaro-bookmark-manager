@@ -410,6 +410,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       let query = supabase
         .from('bookmarks')
         .select('*, collections!inner(*)')
+        .order('order_index', { ascending: true })
         .order('created_at', { ascending: false });
 
       if (collectionId) {
@@ -433,6 +434,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         tags: item.tags || [],
         collectionId: item.collection_id,
         isPinned: item.is_pinned,
+        orderIndex: item.order_index || 0,
         createdAt: new Date(item.created_at),
         updatedAt: new Date(item.updated_at),
       })) || [];
@@ -462,6 +464,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         tags: data.tags || [],
         collectionId: data.collection_id,
         isPinned: data.is_pinned,
+        orderIndex: data.order_index || 0,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -484,6 +487,7 @@ export class SupabaseStorage implements ISupabaseStorage {
           tags: bookmark.tags,
           is_pinned: bookmark.isPinned,
           collection_id: bookmark.collectionId,
+          order_index: bookmark.orderIndex || 0,
         })
         .select()
         .single();
@@ -500,6 +504,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         tags: data.tags || [],
         collectionId: data.collection_id,
         isPinned: data.is_pinned,
+        orderIndex: data.order_index || 0,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -520,6 +525,7 @@ export class SupabaseStorage implements ISupabaseStorage {
       if (updates.tags) updateData.tags = updates.tags;
       if (updates.isPinned !== undefined) updateData.is_pinned = updates.isPinned;
       if (updates.collectionId) updateData.collection_id = updates.collectionId;
+      if (updates.orderIndex !== undefined) updateData.order_index = updates.orderIndex;
 
       const { data, error } = await supabase
         .from('bookmarks')
@@ -560,6 +566,44 @@ export class SupabaseStorage implements ISupabaseStorage {
     } catch (error) {
       console.error('Error deleting bookmark:', error);
       return false;
+    }
+  }
+
+  async reorderBookmarks(collectionId: string, bookmarkIds: string[]): Promise<Bookmark[]> {
+    try {
+      // Update order_index for each bookmark based on the provided order
+      const updates = bookmarkIds.map((id, index) => ({
+        id,
+        order_index: index,
+      }));
+
+      // Use upsert to update all bookmarks in a single transaction
+      const { data, error } = await supabase
+        .from('bookmarks')
+        .upsert(updates, { onConflict: 'id' })
+        .select()
+        .eq('collection_id', collectionId)
+        .order('order_index', { ascending: true });
+
+      if (error) throw error;
+
+      return data?.map(item => ({
+        id: item.id,
+        title: item.title,
+        url: item.url,
+        description: item.description,
+        favicon: item.favicon,
+        preview: item.preview,
+        tags: item.tags || [],
+        collectionId: item.collection_id,
+        isPinned: item.is_pinned,
+        orderIndex: item.order_index || 0,
+        createdAt: new Date(item.created_at),
+        updatedAt: new Date(item.updated_at),
+      })) || [];
+    } catch (error) {
+      console.error('Error reordering bookmarks:', error);
+      return [];
     }
   }
 
