@@ -37,7 +37,7 @@ Building a **free website** that combines:
 ### ❌ **Missing/Incomplete**
 - Advanced search filters (tags, date, domain)
 - CSV export option
-- All remaining 7 UX improvements (2 of 7 completed, 2 deprecated)
+- All remaining 7 UX improvements (3 of 7 completed, 2 deprecated)
 
 ---
 
@@ -200,15 +200,15 @@ Building a **free website** that combines:
 - [x] ~~Verify no functionality breaks~~ (Not needed - Phase 3.1 already complete)
 **Note**: Phase 3.1 (View-Only Sharing) already provides complete sharing functionality. This phase was redundant.
 
-#### **Phase 4.6: Universal Drag & Drop Reordering** ⏳
+#### **Phase 4.6: Universal Drag & Drop Reordering** ✅
 **Goal**: Manual organization across all view modes with custom sort preservation
-- [ ] Add order_index to bookmarks database schema
-- [ ] Implement universal drag reordering for all view modes
-- [ ] Add "Custom" sort option to sort dropdown
-- [ ] Enhance bulk selection with working "Move" functionality
-- [ ] Add manual bulk selection (checkbox per bookmark)
-- [ ] Test drag functionality and sort persistence
-- [ ] Verify no functionality breaks
+- [x] Add order_index to bookmarks database schema
+- [x] Implement universal drag reordering for all view modes
+- [x] Add "Custom" sort option to sort dropdown
+- [x] Enhance bulk selection with working "Move" functionality
+- [x] Add manual bulk selection (checkbox per bookmark)
+- [x] Test drag functionality and sort persistence
+- [x] Verify no functionality breaks
 
 #### **Phase 4.7: Smart Tags** ⏳
 **Goal**: Auto-generated tag suggestions
@@ -353,8 +353,8 @@ shares (
 - [x] No data loss during operations
 
 ### **Phase 4 Success:**
-- [x] 2 of 7 UX improvements work smoothly (Adaptive Views, Command Palette)
-- [ ] Remaining 3 UX improvements pending (2 deprecated)
+- [x] 3 of 7 UX improvements work smoothly (Adaptive Views, Command Palette, Drag & Drop)
+- [ ] Remaining 2 UX improvements pending (2 deprecated)
 - [x] Performance remains excellent
 - [x] Accessibility standards met
 
@@ -371,4 +371,4 @@ shares (
 ---
 
 *Last Updated: December 2024*
-*Status: Phase 4.5 Deprecated - Ready for Phase 4.6 (Universal Drag & Drop Reordering)*
+*Status: Phase 4.6 Complete - Ready for Phase 4.7 (Smart Tags)*
