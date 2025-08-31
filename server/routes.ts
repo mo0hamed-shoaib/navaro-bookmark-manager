@@ -9,6 +9,7 @@ import * as cheerio from "cheerio";
 
 // Smart tag generation function (100% local, no APIs)
 function generateSmartTags(domain: string, path: string, title: string, description: string): string[] {
+  console.log('generateSmartTags called with:', { domain, path, title, description });
   const tags: Set<string> = new Set();
   
   // Domain-based categorization
@@ -102,7 +103,9 @@ function generateSmartTags(domain: string, path: string, title: string, descript
   if (path.includes('/docs/')) tags.add('documentation');
   
   // Limit to top 5 most relevant tags
-  return Array.from(tags).slice(0, 5);
+  const result = Array.from(tags).slice(0, 5);
+  console.log('generateSmartTags returning:', result);
+  return result;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -494,7 +497,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           const domain = urlObj.hostname;
           const path = urlObj.pathname;
           
+          console.log('Generating smart tags for:', { domain, path, title, description });
           const suggestedTags = generateSmartTags(domain, path, title, description);
+          console.log('Generated suggested tags:', suggestedTags);
 
           const preview = {
             title: title.trim(),
