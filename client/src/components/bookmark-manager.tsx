@@ -161,14 +161,12 @@ export function BookmarkManager() {
 
   // Get all bookmarks for sidebar counts (optimized with caching)
   const { data: allBookmarks = [] } = useQuery<Bookmark[]>({
-    queryKey: ["/api/bookmarks", currentWorkspaceId],
+    queryKey: ["/api/bookmarks", "all"],
     queryFn: async () => {
-      if (!currentWorkspaceId) return [];
-      const response = await fetch(`/api/bookmarks?workspaceId=${currentWorkspaceId}`);
+      const response = await fetch(`/api/bookmarks`);
       if (!response.ok) throw new Error("Failed to fetch bookmarks");
       return response.json();
     },
-    enabled: !!currentWorkspaceId,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   });
@@ -600,6 +598,11 @@ export function BookmarkManager() {
 
   // Import/Export functions
   const exportData = () => {
+    console.log('Export button clicked');
+    console.log('Spaces:', spaces);
+    console.log('Collections:', collections);
+    console.log('All bookmarks:', allBookmarks);
+    
     // Prepare collections with space information
     const collectionsWithSpace = collections.map(collection => ({
       ...collection,
@@ -620,6 +623,8 @@ export function BookmarkManager() {
       version: "1.0"
     };
     
+    console.log('Export data prepared:', exportData);
+    
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -629,12 +634,17 @@ export function BookmarkManager() {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+    
+    console.log('Export completed');
   };
 
   const importData = async (file: File) => {
+    console.log('Import started with file:', file.name);
     try {
       const text = await file.text();
       const data = JSON.parse(text);
+      
+      console.log('Parsed import data:', data);
       
       // Validate the import data structure
       if (!data.spaces || !data.collections || !data.bookmarks) {
