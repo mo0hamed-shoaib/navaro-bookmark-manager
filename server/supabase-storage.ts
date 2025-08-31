@@ -571,13 +571,20 @@ export class SupabaseStorage implements ISupabaseStorage {
 
   async reorderBookmarks(collectionId: string, bookmarkIds: string[]): Promise<Bookmark[]> {
     try {
+      console.log('Starting reorder for collection:', collectionId, 'bookmarks:', bookmarkIds);
+      
       // First, verify all bookmarks belong to the specified collection
       const { data: existingBookmarks, error: fetchError } = await supabase
         .from('bookmarks')
-        .select('id, collection_id')
+        .select('id, collection_id, title')
         .in('id', bookmarkIds);
 
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching existing bookmarks:', fetchError);
+        throw fetchError;
+      }
+
+      console.log('Existing bookmarks:', existingBookmarks);
 
       // Check if all bookmarks belong to the specified collection
       const invalidBookmarks = existingBookmarks?.filter(b => b.collection_id !== collectionId);
@@ -587,32 +594,27 @@ export class SupabaseStorage implements ISupabaseStorage {
       }
 
       // Update order_index for each bookmark based on the provided order
-      const updates = bookmarkIds.map((id, index) => ({
-        id,
-        order_index: index,
-        updated_at: new Date().toISOString(),
-      }));
-
-      // Use update instead of upsert to avoid null constraint issues
-      const { data, error } = await supabase
-        .from('bookmarks')
-        .update(updates[0]) // Update first bookmark
-        .eq('id', updates[0].id)
-        .select();
-
-      if (error) throw error;
-
-      // Update remaining bookmarks one by one to avoid conflicts
-      for (let i = 1; i < updates.length; i++) {
+      for (let i = 0; i < bookmarkIds.length; i++) {
+        const bookmarkId = bookmarkIds[i];
+        const newOrderIndex = i;
+        
+        console.log(`Updating bookmark ${bookmarkId} to order_index ${newOrderIndex}`);
+        
         const { error: updateError } = await supabase
           .from('bookmarks')
-          .update(updates[i])
-          .eq('id', updates[i].id);
+          .update({ 
+            order_index: newOrderIndex,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bookmarkId)
+          .eq('collection_id', collectionId); // Extra safety check
 
         if (updateError) {
-          console.error(`Error updating bookmark ${updates[i].id}:`, updateError);
+          console.error(`Error updating bookmark ${bookmarkId}:`, updateError);
           throw updateError;
         }
+        
+        console.log(`Successfully updated bookmark ${bookmarkId}`);
       }
 
       // Fetch the updated bookmarks
@@ -622,7 +624,12 @@ export class SupabaseStorage implements ISupabaseStorage {
         .eq('collection_id', collectionId)
         .order('order_index', { ascending: true });
 
-      if (fetchUpdatedError) throw fetchUpdatedError;
+      if (fetchUpdatedError) {
+        console.error('Error fetching updated bookmarks:', fetchUpdatedError);
+        throw fetchUpdatedError;
+      }
+
+      console.log('Updated bookmarks:', updatedBookmarks);
 
       return updatedBookmarks?.map(item => ({
         id: item.id,
