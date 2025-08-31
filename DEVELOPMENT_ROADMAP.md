@@ -210,13 +210,14 @@ Building a **free website** that combines:
 - [x] Test drag functionality and sort persistence
 - [x] Verify no functionality breaks
 
-#### **Phase 4.7: Smart Tags** ⏳
+#### **Phase 4.7: Smart Tags** ❌ (Deprecated)
 **Goal**: Auto-generated tag suggestions
-- [ ] Implement metadata parsing
-- [ ] Create tag suggestion algorithm
-- [ ] Add auto-tag UI
-- [ ] Test tag generation
-- [ ] Verify no functionality breaks
+- [x] ~~Implement metadata parsing~~ (Removed)
+- [x] ~~Create tag suggestion algorithm~~ (Removed)
+- [x] ~~Add auto-tag UI~~ (Removed)
+- [x] ~~Test tag generation~~ (Removed)
+- [x] ~~Verify no functionality breaks~~ (Removed)
+**Note**: Smart tags feature was implemented but caused UI issues and was deprecated. Focus on core functionality instead.
 
 ---
 
@@ -371,4 +372,4 @@ shares (
 ---
 
 *Last Updated: December 2024*
-*Status: Phase 4.6 Complete - Ready for Phase 4.7 (Smart Tags)*
+*Status: Phase 4.7 Deprecated - Ready for Phase 5.1 (Mobile Responsiveness Improvements)*
