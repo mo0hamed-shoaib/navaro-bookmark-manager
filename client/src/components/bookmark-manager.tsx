@@ -578,7 +578,10 @@ export function BookmarkManager() {
         }
         
         if (collection) {
+          // Set the parent space for the collection
+          setSelectedSpace(collection.spaceId);
           setSelectedCollection(collection.id);
+          setIsAllBookmarksView(false);
           setSearchOpen(false);
           return true;
         }
