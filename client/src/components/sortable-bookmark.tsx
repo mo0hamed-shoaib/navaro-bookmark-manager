@@ -55,7 +55,7 @@ export function SortableBookmark({
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
+    <div ref={setNodeRef} style={style}>
       <ContextMenu>
         <ContextMenuTrigger>
           <Card 
@@ -70,6 +70,8 @@ export function SortableBookmark({
             )}
             onClick={handleClick}
             data-testid={`card-bookmark-${bookmark.id}`}
+            {...attributes}
+            {...listeners}
           >
             <CardContent className={cn(
               "p-4 h-full",
