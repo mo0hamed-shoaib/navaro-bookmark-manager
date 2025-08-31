@@ -62,7 +62,7 @@ interface BookmarkSidebarProps {
   onDeleteSpace: (spaceId: string) => void
   onDeleteCollection: (collectionId: string) => void
   onSearch: () => void
-  onSessions: () => void
+
   onShares: () => void
   onSettings: () => void
   currentWorkspaceId?: string | null
@@ -92,7 +92,7 @@ export function BookmarkSidebar({
   onDeleteSpace,
   onDeleteCollection,
   onSearch,
-  onSessions,
+
   onShares,
   onSettings,
   currentWorkspaceId,
@@ -152,12 +152,7 @@ export function BookmarkSidebar({
                  <span>Search All</span>
                </SidebarMenuButton>
              </SidebarMenuItem>
-             <SidebarMenuItem>
-                              <SidebarMenuButton onClick={onSessions} tooltip="Saved Sessions" className="cursor-pointer">
-                 <Clock />
-                 <span>Saved Sessions</span>
-               </SidebarMenuButton>
-             </SidebarMenuItem>
+
              <SidebarMenuItem>
                               <SidebarMenuButton onClick={onShares} tooltip="Share Workspace" className="cursor-pointer">
                  <Share />

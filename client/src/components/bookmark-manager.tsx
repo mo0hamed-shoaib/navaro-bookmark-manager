@@ -43,14 +43,14 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "@/components/theme-provider";
 import { themes, themeNames } from "@/lib/themes";
 import { apiRequest } from "@/lib/queryClient";
-import type { Space, Collection, Bookmark, Session, SessionTab, Share } from "@shared/schema";
+import type { Space, Collection, Bookmark, Share } from "@shared/schema";
 import { workspaceManager } from "@/lib/workspace";
 import { BookmarkSidebar } from "@/components/bookmark-sidebar";
 import { AddSpaceDialog } from "@/components/add-space-dialog";
 import { AddCollectionDialog } from "@/components/add-collection-dialog";
 import { EditSpaceDialog } from "@/components/edit-space-dialog";
 import { EditCollectionDialog } from "@/components/edit-collection-dialog";
-import { SessionDialog } from "@/components/session-dialog";
+
 import { ShareDialog } from "@/components/share-dialog";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 
@@ -87,8 +87,7 @@ export function BookmarkManager() {
   const [editBookmarkOpen, setEditBookmarkOpen] = useState(false);
   const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
   const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null);
-  const [sessionsOpen, setSessionsOpen] = useState(false);
-  const [selectedSession, setSelectedSession] = useState<Session | null>(null);
+
   const [sharesOpen, setSharesOpen] = useState(false);
   const [importExportOpen, setImportExportOpen] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -229,32 +228,7 @@ export function BookmarkManager() {
     queryKey: ["/api/bookmarks/recent"],
   });
 
-  // Session queries
-  const { data: sessions = [], isLoading: isLoadingSessions } = useQuery<Session[]>({
-    queryKey: ["/api/sessions", currentWorkspaceId],
-    queryFn: async () => {
-      if (!currentWorkspaceId) return [];
-      const response = await fetch(`/api/sessions?workspaceId=${currentWorkspaceId}`);
-      if (!response.ok) throw new Error("Failed to fetch sessions");
-      return response.json();
-    },
-    enabled: !!currentWorkspaceId,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-  });
 
-  const { data: sessionTabs = [] } = useQuery<SessionTab[]>({
-    queryKey: ["/api/sessions/tabs", selectedSession?.id],
-    queryFn: async () => {
-      if (!selectedSession?.id) return [];
-      const response = await fetch(`/api/sessions/${selectedSession.id}/tabs`);
-      if (!response.ok) throw new Error("Failed to fetch session tabs");
-      return response.json();
-    },
-    enabled: !!selectedSession?.id,
-    staleTime: 2 * 60 * 1000, // 2 minutes
-    gcTime: 5 * 60 * 1000, // 5 minutes
-  });
 
   // Share queries
   const { data: shares = [], isLoading: isLoadingShares } = useQuery<Share[]>({
@@ -449,35 +423,7 @@ export function BookmarkManager() {
   });
 
   // Session mutations
-  const deleteSessionMutation = useMutation({
-    mutationFn: async (id: string) => {
-      return apiRequest("DELETE", `/api/sessions/${id}`);
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/sessions"] });
-      setSessionsOpen(false);
-      setSelectedSession(null);
-    },
-  });
 
-  const restoreSessionMutation = useMutation({
-    mutationFn: async (sessionId: string) => {
-      // Get session tabs and open them in new windows
-      const response = await fetch(`/api/sessions/${sessionId}/tabs`);
-      if (!response.ok) throw new Error("Failed to fetch session tabs");
-      const tabs = await response.json();
-      
-      // Open each tab in a new window/tab
-      tabs.forEach((tab: SessionTab) => {
-        window.open(tab.url, '_blank');
-      });
-      
-      return tabs;
-    },
-    onSuccess: (tabs) => {
-      alert(`Restored ${tabs.length} tabs from session!`);
-    },
-  });
 
   // Share mutations
   const createShareMutation = useMutation({
@@ -797,7 +743,7 @@ export function BookmarkManager() {
           setSearchQuery(""); // Clear any existing search
           setSearchOpen(true);
         }}
-        onSessions={() => setSessionsOpen(true)}
+
         onShares={() => setSharesOpen(true)}
         onSettings={() => setSettingsOpen(true)}
         currentWorkspaceId={currentWorkspaceId}
@@ -1988,18 +1934,7 @@ export function BookmarkManager() {
       isDeleting={deleteCollectionMutation.isPending}
     />
 
-    {/* Session Dialog */}
-    <SessionDialog
-      open={sessionsOpen}
-      onOpenChange={setSessionsOpen}
-      sessions={sessions}
-      sessionTabs={sessionTabs}
-      selectedSession={selectedSession}
-      onSessionSelect={setSelectedSession}
-      onDeleteSession={deleteSessionMutation.mutate}
-      onRestoreSession={restoreSessionMutation.mutate}
-      isLoadingSessions={isLoadingSessions}
-    />
+
 
     {/* Share Dialog */}
     <ShareDialog
