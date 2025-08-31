@@ -194,54 +194,53 @@ export function SortableBookmark({
                 </div>
               )}
 
-                                           {/* Action buttons overlay */}
-              <div className="absolute bottom-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
-                 <Button
-                   variant="ghost"
-                   size="sm"
-                   className="h-6 w-6 p-0 hover:bg-background/80"
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     console.log('OPEN URL CLICKED:', bookmark.url);
-                     onOpenUrl(bookmark.url);
-                   }}
-                 >
-                   <ExternalLink className="h-3 w-3" />
-                 </Button>
-                 <Button
-                   variant="ghost"
-                   size="sm"
-                   className="h-6 w-6 p-0 hover:bg-background/80"
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     onEdit(bookmark);
-                   }}
-                 >
-                   <Edit className="h-3 w-3" />
-                 </Button>
-                 <Button
-                   variant="ghost"
-                   size="sm"
-                   className="h-6 w-6 p-0 hover:bg-background/80"
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     onPin(bookmark);
-                   }}
-                 >
-                   <Pin className={cn("h-3 w-3", bookmark.isPinned && "fill-current")} />
-                 </Button>
-                 <Button
-                   variant="ghost"
-                   size="sm"
-                   className="h-6 w-6 p-0 hover:bg-background/80"
-                   onClick={(e) => {
-                     e.stopPropagation();
-                     onCopyUrl(bookmark.url);
-                   }}
-                 >
-                   <Copy className="h-3 w-3" />
-                 </Button>
-               </div>
+              {/* Action buttons overlay */}
+              <div className="absolute top-2 right-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-10">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-background/80"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenUrl(bookmark.url);
+                  }}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-background/80"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onEdit(bookmark);
+                  }}
+                >
+                  <Edit className="h-3 w-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-background/80"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onPin(bookmark);
+                  }}
+                >
+                  <Pin className={cn("h-3 w-3", bookmark.isPinned && "fill-current")} />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-6 w-6 p-0 hover:bg-background/80"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onCopyUrl(bookmark.url);
+                  }}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
 
               {/* Pin indicator */}
               {bookmark.isPinned && (
@@ -260,10 +259,7 @@ export function SortableBookmark({
           </Card>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem onClick={() => {
-            console.log('CONTEXT MENU OPEN URL:', bookmark.url);
-            onOpenUrl(bookmark.url);
-          }}>
+          <ContextMenuItem onClick={() => onOpenUrl(bookmark.url)}>
             <ExternalLink className="mr-2 h-4 w-4" />
             Open Link
           </ContextMenuItem>
