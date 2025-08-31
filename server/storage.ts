@@ -2,10 +2,18 @@ import { type User, type InsertUser, type Collection, type InsertCollection, typ
 import { SupabaseStorage } from './supabase-storage';
 
 export interface IStorage {
-  getUser(id: string): Promise<User | undefined>;
-  getUserByUsername(username: string): Promise<User | undefined>;
-  createUser(user: InsertUser): Promise<User>;
+  // Workspace operations
+  getWorkspace(id: string): Promise<any | undefined>;
+  createWorkspace(id: string): Promise<any>;
   
+  // Space operations
+  getSpaces(workspaceId: string): Promise<any[]>;
+  getSpace(id: string): Promise<any | undefined>;
+  createSpace(space: any): Promise<any>;
+  updateSpace(id: string, updates: Partial<any>): Promise<any | undefined>;
+  deleteSpace(id: string): Promise<boolean>;
+  
+  // Collection operations
   getCollections(spaceId: string): Promise<Collection[]>;
   getAllCollections(workspaceId?: string): Promise<Collection[]>;
   getCollection(id: string): Promise<Collection | undefined>;
@@ -13,15 +21,16 @@ export interface IStorage {
   updateCollection(id: string, updates: Partial<InsertCollection>): Promise<Collection | undefined>;
   deleteCollection(id: string): Promise<boolean>;
   
+  // Bookmark operations
   getBookmarks(collectionId?: string, spaceId?: string): Promise<Bookmark[]>;
   getBookmark(id: string): Promise<Bookmark | undefined>;
   createBookmark(bookmark: InsertBookmark): Promise<Bookmark>;
   updateBookmark(id: string, updates: Partial<InsertBookmark>): Promise<Bookmark | undefined>;
   deleteBookmark(id: string): Promise<boolean>;
   reorderBookmarks(collectionId: string, bookmarkIds: string[]): Promise<Bookmark[]>;
-  searchBookmarks(userId: string, query: string): Promise<Bookmark[]>;
-  getPinnedBookmarks(userId: string): Promise<Bookmark[]>;
-  getRecentBookmarks(userId: string, limit?: number): Promise<Bookmark[]>;
+  searchBookmarks(query: string): Promise<Bookmark[]>;
+  getPinnedBookmarks(): Promise<Bookmark[]>;
+  getRecentBookmarks(limit?: number): Promise<Bookmark[]>;
   
   // Share management
   getShares(workspaceId: string): Promise<Share[]>;
