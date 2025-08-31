@@ -156,14 +156,15 @@ Building a **free website** that combines:
 ### **Phase 4: UX Improvements (7 Enhancements)**
 *Priority: Medium - Differentiators over Toby*
 
-#### **Phase 4.1: Quick Capture Mode** ⏳
+#### **Phase 4.1: Quick Capture Mode** ❌ (Deprecated)
 **Goal**: One-click save to Inbox
-- [ ] Create Inbox collection concept
-- [ ] Add quick capture button
-- [ ] Implement auto-save to Inbox
-- [ ] Add Inbox organization UI
-- [ ] Test capture workflow
-- [ ] Verify no functionality breaks
+- [x] ~~Create Inbox collection concept~~ (Removed)
+- [x] ~~Add quick capture button~~ (Removed)
+- [x] ~~Implement auto-save to Inbox~~ (Removed)
+- [x] ~~Add Inbox organization UI~~ (Removed)
+- [x] ~~Test capture workflow~~ (Removed)
+- [x] ~~Verify no functionality breaks~~ (Removed)
+**Note**: Feature was removed as it didn't align with user preferences
 
 #### **Phase 4.2: Adaptive Views** ⏳
 **Goal**: Per-collection view settings
