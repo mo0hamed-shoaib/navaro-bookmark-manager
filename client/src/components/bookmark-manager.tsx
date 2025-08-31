@@ -684,13 +684,20 @@ export function BookmarkManager() {
   };
 
   const reorderBookmarks = (bookmarkIds: string[]) => {
-    if (!selectedCollection) return;
+    // Determine the collection ID from the first bookmark
+    if (bookmarkIds.length === 0) return;
+    
+    const firstBookmark = filteredBookmarks.find(b => b.id === bookmarkIds[0]);
+    if (!firstBookmark) return;
+    
+    const collectionId = firstBookmark.collectionId;
+    if (!collectionId) return;
     
     // Set sort to custom when reordering
     setSortBy("custom");
     
     reorderBookmarksMutation.mutate({
-      collectionId: selectedCollection,
+      collectionId,
       bookmarkIds,
     });
   };

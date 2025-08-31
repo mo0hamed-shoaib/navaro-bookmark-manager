@@ -571,23 +571,60 @@ export class SupabaseStorage implements ISupabaseStorage {
 
   async reorderBookmarks(collectionId: string, bookmarkIds: string[]): Promise<Bookmark[]> {
     try {
+      // First, verify all bookmarks belong to the specified collection
+      const { data: existingBookmarks, error: fetchError } = await supabase
+        .from('bookmarks')
+        .select('id, collection_id')
+        .in('id', bookmarkIds);
+
+      if (fetchError) throw fetchError;
+
+      // Check if all bookmarks belong to the specified collection
+      const invalidBookmarks = existingBookmarks?.filter(b => b.collection_id !== collectionId);
+      if (invalidBookmarks && invalidBookmarks.length > 0) {
+        console.error('Some bookmarks do not belong to the specified collection:', invalidBookmarks);
+        throw new Error('Invalid bookmark collection');
+      }
+
       // Update order_index for each bookmark based on the provided order
       const updates = bookmarkIds.map((id, index) => ({
         id,
         order_index: index,
+        updated_at: new Date().toISOString(),
       }));
 
-      // Use upsert to update all bookmarks in a single transaction
+      // Use update instead of upsert to avoid null constraint issues
       const { data, error } = await supabase
         .from('bookmarks')
-        .upsert(updates, { onConflict: 'id' })
-        .select()
-        .eq('collection_id', collectionId)
-        .order('order_index', { ascending: true });
+        .update(updates[0]) // Update first bookmark
+        .eq('id', updates[0].id)
+        .select();
 
       if (error) throw error;
 
-      return data?.map(item => ({
+      // Update remaining bookmarks one by one to avoid conflicts
+      for (let i = 1; i < updates.length; i++) {
+        const { error: updateError } = await supabase
+          .from('bookmarks')
+          .update(updates[i])
+          .eq('id', updates[i].id);
+
+        if (updateError) {
+          console.error(`Error updating bookmark ${updates[i].id}:`, updateError);
+          throw updateError;
+        }
+      }
+
+      // Fetch the updated bookmarks
+      const { data: updatedBookmarks, error: fetchUpdatedError } = await supabase
+        .from('bookmarks')
+        .select('*')
+        .eq('collection_id', collectionId)
+        .order('order_index', { ascending: true });
+
+      if (fetchUpdatedError) throw fetchUpdatedError;
+
+      return updatedBookmarks?.map(item => ({
         id: item.id,
         title: item.title,
         url: item.url,
