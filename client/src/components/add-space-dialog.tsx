@@ -78,7 +78,7 @@ export function AddSpaceDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent className="w-[calc(100%-2rem)] max-w-none sm:max-w-[425px] md:max-w-md lg:max-w-lg max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Add New Space</DialogTitle>
           <DialogDescription>

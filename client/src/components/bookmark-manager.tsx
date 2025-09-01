@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import {
+import { 
   DndContext,
   closestCenter,
   KeyboardSensor,
@@ -954,6 +954,7 @@ export function BookmarkManager() {
   }, [editBookmarkOpen, editingBookmark, form]);
 
   return (
+    <div className="overflow-x-hidden min-h-screen">
     <SidebarProvider>
       <BookmarkSidebar
         spaces={spaces}
@@ -1011,31 +1012,31 @@ export function BookmarkManager() {
         isLoadingCollections={isLoadingCollections}
       />
 
-      <SidebarInset>
+      <SidebarInset className="overflow-x-hidden">
         {/* Header */}
-        <header className="flex h-16 shrink-0 items-center px-4 w-full transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-          {/* Left section: Sidebar trigger + Breadcrumbs */}
-          <div className="flex items-center gap-2 flex-shrink-0">
-            <SidebarTrigger className="-ml-1" />
-            <div className="h-4 w-px bg-border" />
-            {/* Breadcrumbs */}
-            <nav className="flex items-center space-x-2 text-sm text-muted-foreground">
+        <header className="flex h-16 shrink-0 items-center w-full min-w-0 px-2 sm:px-4 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+                              {/* Left section: Sidebar trigger + Breadcrumbs (Desktop) */}
+          <div className="flex items-center gap-2 flex-shrink-0 min-w-0">
+            <SidebarTrigger className="-ml-1 flex-shrink-0" />
+            <div className="h-4 w-px bg-border flex-shrink-0 hidden sm:block" />
+            {/* Breadcrumbs - Desktop Only */}
+            <nav className="hidden sm:flex items-center space-x-2 text-sm text-muted-foreground min-w-0">
               <button 
                 onClick={handleHomeClick}
-                className="hover:text-foreground transition-colors cursor-pointer hover:underline"
+                className="hover:text-foreground transition-colors cursor-pointer hover:underline flex-shrink-0"
                 title="Go to All Bookmarks"
               >
                 Home
               </button>
               {currentSpace && (
                 <>
-                  <span>/</span>
+                  <span className="flex-shrink-0">/</span>
                   <button 
                   onClick={() => {
                       setSelectedSpace(currentSpace.id);
                       setSelectedCollection(undefined);
                     }}
-                    className="hover:text-foreground transition-colors cursor-pointer hover:underline"
+                    className="hover:text-foreground transition-colors cursor-pointer hover:underline truncate min-w-0"
                     title={`Go to ${currentSpace.name}`}
                   >
                     {currentSpace.name}
@@ -1044,8 +1045,8 @@ export function BookmarkManager() {
               )}
               {currentCollection && (
                 <>
-              <span>/</span>
-              <span className="text-foreground font-medium">
+              <span className="flex-shrink-0">/</span>
+              <span className="text-foreground font-medium truncate min-w-0">
                     {currentCollection.name}
               </span>
                 </>
@@ -1057,12 +1058,12 @@ export function BookmarkManager() {
           </div>
 
           {/* Center section: Search Bar */}
-          <div className="flex-1 flex justify-center px-8">
-            <div className="relative w-full max-w-md">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
+          <div className="flex-1 flex justify-center px-2 sm:px-4 md:px-8 min-w-0">
+            <div className="relative w-full max-w-xs sm:max-w-sm md:max-w-md min-w-0">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4 flex-shrink-0" />
               <Input
-                placeholder="Search bookmarks, collections, tags..."
-                className="pl-10"
+                placeholder="Search..."
+                className="pl-10 w-full"
                 onClick={() => setSearchOpen(true)}
                 readOnly
                 data-testid="input-search"
@@ -1071,10 +1072,10 @@ export function BookmarkManager() {
           </div>
 
           {/* Right section: Actions */}
-          <div className="flex items-center space-x-3 flex-shrink-0">
-            {/* View Mode Toggle */}
-            <div className="flex items-center bg-muted rounded-md p-1">
-              <Button
+          <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
+            {/* View Mode Toggle - Desktop */}
+            <div className="hidden md:flex items-center bg-muted rounded-md p-1">
+                <Button
                 variant={effectiveViewMode === "grid" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => {
@@ -1088,8 +1089,8 @@ export function BookmarkManager() {
                 title="Grid View"
               >
                 <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
+                </Button>
+                <Button
                 variant={effectiveViewMode === "grid2" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => {
@@ -1103,7 +1104,7 @@ export function BookmarkManager() {
                 title="2-Column Grid"
               >
                 <LayoutGrid className="h-4 w-4" />
-              </Button>
+                </Button>
               <Button
                 variant={effectiveViewMode === "list" ? "default" : "ghost"}
                 size="sm"
@@ -1119,9 +1120,9 @@ export function BookmarkManager() {
               >
                 <List className="h-4 w-4" />
               </Button>
-              <Button
+                  <Button
                 variant={effectiveViewMode === "compact" ? "default" : "ghost"}
-                size="sm"
+                      size="sm"
                 onClick={() => {
                   if (selectedCollectionData) {
                     updateCollectionViewMode(selectedCollectionData.id, "compact");
@@ -1133,18 +1134,120 @@ export function BookmarkManager() {
                 title="Compact View"
               >
                 <LayoutGrid className="h-4 w-4" />
-              </Button>
-            </div>
+                    </Button>
+        </div>
+
+            {/* View Mode Toggle - Mobile Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild className="md:hidden">
+                <Button variant="ghost" size="sm" title="View Mode">
+                  {effectiveViewMode === "grid" && <Grid3X3 className="h-4 w-4" />}
+                  {effectiveViewMode === "grid2" && <LayoutGrid className="h-4 w-4" />}
+                  {effectiveViewMode === "list" && <List className="h-4 w-4" />}
+                  {effectiveViewMode === "compact" && <LayoutGrid className="h-4 w-4" />}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (selectedCollectionData) {
+                      updateCollectionViewMode(selectedCollectionData.id, "grid");
+                    } else {
+                      setViewMode("grid");
+                    }
+                  }}
+                >
+                  <Grid3X3 className="h-4 w-4 mr-2" />
+                  Grid View
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => {
+                    if (selectedCollectionData) {
+                      updateCollectionViewMode(selectedCollectionData.id, "grid2");
+                    } else {
+                      setViewMode("grid2");
+                    }
+                  }}
+                >
+                  <LayoutGrid className="h-4 w-4 mr-2" />
+                  2-Column Grid
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (selectedCollectionData) {
+                      updateCollectionViewMode(selectedCollectionData.id, "list");
+                    } else {
+                      setViewMode("list");
+                    }
+                  }}
+                >
+                  <List className="h-4 w-4 mr-2" />
+                  List View
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => {
+                    if (selectedCollectionData) {
+                      updateCollectionViewMode(selectedCollectionData.id, "compact");
+                    } else {
+                      setViewMode("compact");
+                    }
+                  }}
+                >
+                  <LayoutGrid className="h-4 w-4 mr-2" />
+                  Compact View
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
 
             {/* Add Bookmark */}
-            <Button onClick={() => setAddBookmarkOpen(true)} data-testid="button-add-bookmark-header">
-              <Plus className="h-4 w-4 mr-2" />
-              Add Bookmark
+            <Button 
+              onClick={() => setAddBookmarkOpen(true)} 
+              data-testid="button-add-bookmark-header"
+              size="sm" 
+              className="flex-shrink-0"
+            >
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Add Bookmark</span>
             </Button>
 
-            {/* Theme Switcher */}
+            {/* More Actions Dropdown - Mobile */}
             <DropdownMenu>
-              <DropdownMenuTrigger asChild>
+              <DropdownMenuTrigger asChild className="sm:hidden">
+                <Button variant="ghost" size="sm" title="More Actions">
+                  <MoreHorizontal className="h-4 w-4" />
+              </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => setSettingsOpen(true)}>
+                  <Settings className="h-4 w-4 mr-2" />
+                  Settings
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                {themeNames.map((themeName) => {
+                  const themeDisplayName = themes[themeName]?.name || themeName;
+                  return (
+                    <DropdownMenuItem
+                      key={themeName}
+                      onClick={() => setTheme(themeName)}
+                    >
+                      <div className={cn(
+                        "w-3 h-3 rounded-full mr-2",
+                        themeName === "highlighter" && "bg-gradient-to-r from-green-400 to-purple-400",
+                        themeName === "zen-garden" && "bg-gradient-to-r from-green-300 to-purple-300",
+                        themeName === "honey" && "bg-gradient-to-r from-yellow-400 to-orange-500",
+                        themeName === "nomad" && "bg-gradient-to-r from-red-500 to-gray-400",
+                        themeName === "quadratic" && "bg-gradient-to-r from-gray-900 to-white"
+                      )} />
+                      {themeDisplayName}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Theme Switcher - Desktop */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild className="hidden sm:flex">
                 <Button variant="ghost" size="sm" data-testid="button-theme-switcher" title="Switch Theme">
                   <Palette className="h-4 w-4" />
                 </Button>
@@ -1174,15 +1277,54 @@ export function BookmarkManager() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* User Menu */}
-            <Button variant="ghost" size="sm" data-testid="button-user-menu">
+            {/* User Menu - Desktop */}
+            <Button variant="ghost" size="sm" data-testid="button-user-menu" className="hidden sm:flex">
               <User className="h-4 w-4" />
             </Button>
           </div>
         </header>
 
+        {/* Breadcrumbs - Mobile Only */}
+        <div className="px-3 sm:px-4 md:px-6 py-2 border-b bg-muted/30 sm:hidden">
+          <nav className="flex items-center space-x-1 text-sm text-muted-foreground min-w-0">
+            <button 
+              onClick={handleHomeClick}
+              className="hover:text-foreground transition-colors cursor-pointer hover:underline flex-shrink-0"
+              title="Go to All Bookmarks"
+            >
+              🏠
+            </button>
+            {currentSpace && (
+              <>
+                <span className="flex-shrink-0">/</span>
+                <button 
+                onClick={() => {
+                    setSelectedSpace(currentSpace.id);
+                    setSelectedCollection(undefined);
+                  }}
+                  className="hover:text-foreground transition-colors cursor-pointer hover:underline truncate min-w-0"
+                  title={`Go to ${currentSpace.name}`}
+                >
+                  {currentSpace.name.slice(0, 8)}...
+                </button>
+              </>
+            )}
+            {currentCollection && (
+              <>
+            <span className="flex-shrink-0">/</span>
+            <span className="text-foreground font-medium truncate min-w-0">
+                  {currentCollection.name.slice(0, 8)}...
+            </span>
+              </>
+            )}
+            {!currentSpace && !currentCollection && (
+              <span className="text-foreground font-medium">All</span>
+            )}
+          </nav>
+        </div>
+
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:px-4 md:px-6 py-4 md:py-6">
           {/* Collection Header */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-4">
@@ -1211,24 +1353,27 @@ export function BookmarkManager() {
             </div>
             
             {/* Action Bar */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:justify-between">
+              <div className="flex items-center gap-2 sm:gap-4 flex-wrap">
                 <Button
                   variant="ghost"
                   size="sm"
                   onClick={selectAllBookmarks}
                   data-testid="button-select-all"
+                  className="flex-shrink-0"
                 >
-                  <CheckSquare className="h-4 w-4 mr-2" />
-                  {selectedBookmarks.size === filteredBookmarks.length ? "Deselect All" : "Select All"}
+                  <CheckSquare className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">
+                    {selectedBookmarks.size === filteredBookmarks.length ? "Deselect All" : "Select All"}
+                  </span>
                 </Button>
 
                 {selectedBookmarks.size > 0 && (
-                  <div className="flex items-center space-x-2">
-                    <span className="text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-sm text-muted-foreground whitespace-nowrap">
                       {selectedBookmarks.size} selected
                     </span>
-                    <Button size="sm" variant="secondary" data-testid="button-bulk-move">
+                    <Button size="sm" variant="secondary" data-testid="button-bulk-move" className="flex-shrink-0">
                       Move
                     </Button>
                     <Button 
@@ -1239,6 +1384,7 @@ export function BookmarkManager() {
                         setSelectedBookmarks(new Set());
                       }}
                       data-testid="button-bulk-delete"
+                      className="flex-shrink-0"
                     >
                       Delete
                     </Button>
@@ -1246,7 +1392,7 @@ export function BookmarkManager() {
                 )}
               </div>
               <Select value={sortBy} onValueChange={(value: "date" | "name" | "visits" | "custom") => setSortBy(value)}>
-                <SelectTrigger className="w-48" data-testid="select-sort">
+                <SelectTrigger className="w-full sm:w-48 min-w-0" data-testid="select-sort">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1285,8 +1431,8 @@ export function BookmarkManager() {
                     : horizontalListSortingStrategy
                 }
               >
-                <div className={cn(
-                  "gap-4",
+            <div className={cn(
+              "gap-4",
                   effectiveViewMode === "grid" && "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
                   effectiveViewMode === "grid2" && "grid grid-cols-1 md:grid-cols-2",
                   effectiveViewMode === "list" && "flex flex-col space-y-3",
@@ -1313,11 +1459,11 @@ export function BookmarkManager() {
                       }}
                     />
                   ))}
-                </div>
+                                  </div>
               </SortableContext>
             </DndContext>
-          )}
-        </div>
+                                )}
+                              </div>
       </SidebarInset>
 
       {/* Enhanced Command Palette */}
@@ -1357,19 +1503,19 @@ export function BookmarkManager() {
                       <Plus className="w-4 h-4 mr-2" />
                       <span>Add Bookmark</span>
                                              <span className="ml-auto text-xs text-muted-foreground">{'>'}add</span>
-                    </div>
+                              </div>
                     <div className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
                          onClick={() => setSearchQuery(">new collection")}>
                       <Folder className="w-4 h-4 mr-2" />
                       <span>New Collection</span>
                       <span className="ml-auto text-xs text-muted-foreground">{'>'}new collection</span>
-                    </div>
+                            </div>
                     <div className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
                          onClick={() => setSearchQuery(">export")}>
                       <Download className="w-4 h-4 mr-2" />
                       <span>Export Data</span>
                       <span className="ml-auto text-xs text-muted-foreground">{'>'}export</span>
-                    </div>
+                          </div>
                     <div className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
                          onClick={() => setSearchQuery(">share")}>
                       <ExternalLink className="w-4 h-4 mr-2" />
@@ -1385,7 +1531,7 @@ export function BookmarkManager() {
                       <Home className="w-4 h-4 mr-2" />
                       <span>All Bookmarks</span>
                       <span className="ml-auto text-xs text-muted-foreground">@all</span>
-                    </div>
+                            </div>
                     {spaces.slice(0, 3).map((space) => (
                       <div key={space.id} 
                            className="flex items-center px-2 py-2 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
@@ -1395,8 +1541,8 @@ export function BookmarkManager() {
                         <span className="ml-auto text-xs text-muted-foreground">@{space.name.toLowerCase()}</span>
                       </div>
                     ))}
-                  </div>
-                </div>
+                              </div>
+                            </div>
               );
             }
             
@@ -1434,10 +1580,10 @@ export function BookmarkManager() {
                           <IconComponent className="w-4 h-4 mr-2" />
                           <span>{suggestion.label}</span>
                           <span className="ml-auto text-xs text-muted-foreground">{'>'}{suggestion.cmd}</span>
-                        </div>
+                            </div>
                       );
                     })}
-                  </div>
+                          </div>
                 );
               }
             }
@@ -1457,7 +1603,7 @@ export function BookmarkManager() {
                       <div
                         key={item.id}
                         className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
-                        onClick={() => {
+                      onClick={() => {
                           executeCommand(`@${item.name.toLowerCase()}`);
                           setSearchQuery("");
                         }}
@@ -1466,8 +1612,8 @@ export function BookmarkManager() {
                         <span>{item.name}</span>
                         <span className="ml-auto text-xs text-muted-foreground">@{item.name.toLowerCase()}</span>
                       </div>
-                    ))}
-                  </div>
+              ))}
+            </div>
                 );
               }
             }
@@ -1493,21 +1639,21 @@ export function BookmarkManager() {
                 <div className="text-sm font-medium text-muted-foreground mb-2">Bookmarks</div>
                 {resultsToShow.map((bookmark) => (
                   <div
-                    key={bookmark.id}
+                key={bookmark.id}
                     className="flex items-center px-2 py-3 text-sm cursor-pointer hover:bg-accent hover:text-accent-foreground rounded-sm"
                     onClick={() => {
-                      window.open(bookmark.url, "_blank");
-                      setSearchOpen(false);
+                  window.open(bookmark.url, "_blank");
+                  setSearchOpen(false);
                       setSearchQuery("");
-                    }}
-                    data-testid={`search-result-${bookmark.id}`}
-                  >
-                    {bookmark.favicon && (
+                }}
+                data-testid={`search-result-${bookmark.id}`}
+              >
+                {bookmark.favicon && (
                       <Favicon src={bookmark.favicon} className="w-4 h-4 rounded mr-2" alt="" />
-                    )}
-                    <span>{bookmark.title}</span>
+                )}
+                <span>{bookmark.title}</span>
                   </div>
-                ))}
+            ))}
               </div>
             );
           })()}
@@ -1516,7 +1662,10 @@ export function BookmarkManager() {
 
       {/* Add Bookmark Dialog */}
       <Dialog open={addBookmarkOpen} onOpenChange={setAddBookmarkOpen}>
-        <DialogContent data-testid="dialog-add-bookmark">
+        <DialogContent 
+          className="w-[calc(100%-2rem)] max-w-none sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl max-h-[90vh] overflow-y-auto p-4 sm:p-6" 
+          data-testid="dialog-add-bookmark"
+        >
           <DialogHeader>
             <DialogTitle>Add New Bookmark</DialogTitle>
           </DialogHeader>
@@ -1674,7 +1823,10 @@ export function BookmarkManager() {
 
       {/* Edit Bookmark Dialog */}
       <Dialog open={editBookmarkOpen} onOpenChange={setEditBookmarkOpen}>
-        <DialogContent data-testid="dialog-edit-bookmark">
+        <DialogContent 
+          className="w-[calc(100%-2rem)] max-w-none sm:max-w-sm md:max-w-md lg:max-w-lg xl:max-w-xl max-h-[90vh] overflow-y-auto p-4 sm:p-6" 
+          data-testid="dialog-edit-bookmark"
+        >
           <DialogHeader>
             <DialogTitle>Edit Bookmark</DialogTitle>
           </DialogHeader>
@@ -1846,7 +1998,10 @@ export function BookmarkManager() {
 
       {/* Settings Dialog */}
       <Dialog open={settingsOpen} onOpenChange={setSettingsOpen}>
-        <DialogContent className="max-w-2xl" data-testid="dialog-settings">
+        <DialogContent 
+          className="w-[calc(100%-2rem)] max-w-none sm:max-w-lg md:max-w-xl lg:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6" 
+          data-testid="dialog-settings"
+        >
           <DialogHeader>
             <DialogTitle>Settings</DialogTitle>
           </DialogHeader>
@@ -1857,27 +2012,27 @@ export function BookmarkManager() {
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-foreground">Theme</label>
-                  <div className="grid grid-cols-2 gap-3 mt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mt-2">
                     {themeNames.map((themeName) => {
                       const themeDisplayName = themes[themeName]?.name || themeName;
                       return (
                         <Button
                           key={themeName}
                           variant={theme === themeName ? "default" : "outline"}
-                          className="justify-start h-auto p-3"
+                          className="justify-start h-auto p-2 sm:p-3 text-sm"
                           onClick={() => setTheme(themeName)}
                           data-testid={`settings-theme-${themeName}`}
                         >
-                          <div className="flex items-center space-x-3">
+                          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
                             <div className={cn(
-                              "w-4 h-4 rounded-full",
+                              "w-3 h-3 sm:w-4 sm:h-4 rounded-full flex-shrink-0",
                               themeName === "highlighter" && "bg-gradient-to-r from-green-400 to-purple-400",
                               themeName === "zen-garden" && "bg-gradient-to-r from-green-300 to-purple-300",
                               themeName === "honey" && "bg-gradient-to-r from-yellow-400 to-orange-500",
                               themeName === "nomad" && "bg-gradient-to-r from-red-500 to-gray-400",
                               themeName === "quadratic" && "bg-gradient-to-r from-gray-900 to-white"
                             )} />
-                            <span className="text-sm">{themeDisplayName}</span>
+                            <span className="truncate">{themeDisplayName}</span>
                           </div>
                         </Button>
                       );
@@ -1886,11 +2041,12 @@ export function BookmarkManager() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-foreground">Default View Mode</label>
-                  <div className="flex space-x-2 mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
                     <Button
                       variant={viewMode === "grid" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setViewMode("grid")}
+                      className="flex-shrink-0"
                     >
                       <Grid3X3 className="h-4 w-4 mr-2" />
                       Grid
@@ -1899,6 +2055,7 @@ export function BookmarkManager() {
                       variant={viewMode === "grid2" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setViewMode("grid2")}
+                      className="flex-shrink-0"
                     >
                       <LayoutGrid className="h-4 w-4 mr-2" />
                       2-Column
@@ -1907,6 +2064,7 @@ export function BookmarkManager() {
                       variant={viewMode === "list" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setViewMode("list")}
+                      className="flex-shrink-0"
                     >
                       <List className="h-4 w-4 mr-2" />
                       List
@@ -1915,6 +2073,7 @@ export function BookmarkManager() {
                       variant={viewMode === "compact" ? "default" : "outline"}
                       size="sm"
                       onClick={() => setViewMode("compact")}
+                      className="flex-shrink-0"
                     >
                       <LayoutGrid className="h-4 w-4 mr-2" />
                       Compact
@@ -1928,7 +2087,7 @@ export function BookmarkManager() {
             <div>
               <h3 className="text-lg font-medium mb-4">Data Management</h3>
               <div className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <div className="text-sm font-medium">Export Bookmarks</div>
                     <div className="text-xs text-muted-foreground">Download your bookmarks as JSON</div>
@@ -1941,11 +2100,12 @@ export function BookmarkManager() {
                       exportData();
                     }}
                     data-testid="button-export-bookmarks"
+                    className="w-full sm:w-auto"
                   >
                     Export
                   </Button>
                 </div>
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                   <div>
                     <div className="text-sm font-medium">Import Bookmarks</div>
                     <div className="text-xs text-muted-foreground">Import from JSON file</div>
@@ -1966,6 +2126,7 @@ export function BookmarkManager() {
                       input.click();
                     }}
                     data-testid="button-import-bookmarks"
+                    className="w-full sm:w-auto"
                   >
                     Import
                   </Button>
@@ -1979,11 +2140,11 @@ export function BookmarkManager() {
               <div className="text-sm text-muted-foreground space-y-2">
                 <div>Toby Bookmark Manager v1.0</div>
                 <div>A modern alternative to browser bookmark management</div>
-                <div className="flex items-center space-x-4 pt-2">
-                  <Button variant="outline" size="sm">
+                <div className="flex flex-col sm:flex-row gap-2 pt-2">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
                     Keyboard Shortcuts
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
                     Privacy Policy
                   </Button>
                 </div>
@@ -2045,5 +2206,6 @@ export function BookmarkManager() {
 
     
   </SidebarProvider>
+    </div>
   );
 }
