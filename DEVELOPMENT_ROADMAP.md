@@ -36,7 +36,6 @@ Building a **free website** that combines:
 
 ### ❌ **Missing/Incomplete**
 - Advanced search filters (tags, date, domain)
-- CSV export option
 - All remaining 7 UX improvements (3 of 7 completed, 2 deprecated)
 
 ---
@@ -145,7 +144,7 @@ Building a **free website** that combines:
 **Goal**: Data portability
 - [x] Implement JSON export
 - [x] Create import functionality
-- [ ] Add CSV export option
+- [x] ~~Add CSV export option~~ (Deprecated - JSON export provides sufficient functionality)
 - [x] Ensure imports create new spaces
 - [x] Test data integrity
 - [x] Verify no functionality breaks
@@ -224,15 +223,15 @@ Building a **free website** that combines:
 ### **Phase 5: Advanced Features (Delayed)**
 *Priority: Low - Future enhancements*
 
-#### **Phase 5.1: Mobile Responsiveness Improvements** 🔄
+#### **Phase 5.1: Mobile Responsiveness Improvements** ✅
 **Goal**: Enhanced mobile experience
-- [ ] Swipe gestures for sidebar
-- [ ] Touch-friendly interactions
-- [ ] Mobile-optimized layouts
-- [ ] Test mobile functionality
-- [ ] Verify no functionality breaks
+- [x] Swipe gestures for sidebar
+- [x] Touch-friendly interactions
+- [x] Mobile-optimized layouts
+- [x] Test mobile functionality
+- [x] Verify no functionality breaks
 
-#### **Phase 5.2: Advanced Filtering & Sorting** 🔄
+#### **Phase 5.2: Advanced Filtering & Sorting** ❌ **DEPRECATED**
 **Goal**: Professional filtering capabilities
 - [ ] Multi-criteria filtering
 - [ ] Advanced sorting options
@@ -240,7 +239,7 @@ Building a **free website** that combines:
 - [ ] Test filtering performance
 - [ ] Verify no functionality breaks
 
-#### **Phase 5.3: Keyboard Navigation** 🔄
+#### **Phase 5.3: Keyboard Navigation** ❌ **DEPRECATED**
 **Goal**: Power user keyboard shortcuts
 - [ ] Global keyboard shortcuts
 - [ ] Navigation shortcuts
