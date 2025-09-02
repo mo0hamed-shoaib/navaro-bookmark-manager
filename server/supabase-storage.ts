@@ -536,6 +536,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         tags: data.tags || [],
         collectionId: data.collection_id,
         isPinned: data.is_pinned,
+        orderIndex: data.order_index || 0,
         createdAt: new Date(data.created_at),
         updatedAt: new Date(data.updated_at),
       };
@@ -662,6 +663,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         tags: item.tags || [],
         collectionId: item.collection_id,
         isPinned: item.is_pinned,
+        orderIndex: item.order_index || 0,
         createdAt: new Date(item.created_at),
         updatedAt: new Date(item.updated_at),
       })) || [];
@@ -691,6 +693,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         tags: item.tags || [],
         collectionId: item.collection_id,
         isPinned: item.is_pinned,
+        orderIndex: item.order_index || 0,
         createdAt: new Date(item.created_at),
         updatedAt: new Date(item.updated_at),
       })) || [];
@@ -720,6 +723,7 @@ export class SupabaseStorage implements ISupabaseStorage {
         tags: item.tags || [],
         collectionId: item.collection_id,
         isPinned: item.is_pinned,
+        orderIndex: item.order_index || 0,
         createdAt: new Date(item.created_at),
         updatedAt: new Date(item.updated_at),
       })) || [];
