@@ -10,6 +10,15 @@ import * as cheerio from "cheerio";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Health check endpoint for Railway
+  app.get("/api/health", (req, res) => {
+    res.status(200).json({ 
+      status: "healthy", 
+      timestamp: new Date().toISOString(),
+      service: "bookmark-manager-backend"
+    });
+  });
+
   // Workspace routes for Magic Link System
   app.post("/api/workspaces", async (req, res) => {
     try {
