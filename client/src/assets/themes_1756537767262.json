@@ -16,7 +16,7 @@
       "Shape & Spacing": { "Border radius": "0rem" },
       "Components": {
         "Actions": {
-          "Primary background": "#b0f582",
+          "Primary background": "#84ca53",
           "Primary text": "#000000",
           "Secondary background": "#000000",
           "Secondary text": "#ffffff",
@@ -31,7 +31,7 @@
           "Focus Border": "#000000"
         },
         "Containers": {
-          "Card background": "#f6f6f6",
+          "Card background": "#f2f2f2",
           "Card text": "#000000",
           "Popover background": "#ffffff",
           "Popover text": "#000000"
@@ -61,7 +61,7 @@
       "Shape & Spacing": { "Border radius": "0.875rem" },
       "Components": {
         "Actions": {
-          "Primary background": "#91bfb4",
+          "Primary background": "#5ba895",
           "Primary text": "#151515",
           "Secondary background": "#151515",
           "Secondary text": "#e9ebe0",
@@ -106,7 +106,7 @@
       "Shape & Spacing": { "Border radius": "0.875rem" },
       "Components": {
         "Actions": {
-          "Primary background": "#f7ce86",
+          "Primary background": "#b68b2d",
           "Primary text": "#5b4824",
           "Secondary background": "#5b4824",
           "Secondary text": "#f9dea9",
@@ -121,7 +121,7 @@
           "Focus Border": "#5b4824"
         },
         "Containers": {
-          "Card background": "#fefbf0",
+          "Card background": "#f9f1df",
           "Card text": "#0f1419",
           "Popover background": "#ffffff",
           "Popover text": "#0f1419"
