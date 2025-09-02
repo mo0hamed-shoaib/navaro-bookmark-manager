@@ -10,23 +10,12 @@ import * as cheerio from "cheerio";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Root endpoint for Railway
+  // Root endpoint
   app.get("/", (req, res) => {
     res.status(200).json({ 
       message: "Bookmark Manager Backend API",
       status: "running",
-      timestamp: new Date().toISOString(),
-      port: process.env.PORT || 'not set',
-      nodeEnv: process.env.NODE_ENV || 'not set'
-    });
-  });
-
-  // Simple test endpoint
-  app.get("/test", (req, res) => {
-    res.status(200).json({ 
-      message: "Server is responding!",
-      timestamp: new Date().toISOString(),
-      port: process.env.PORT || 'not set'
+      timestamp: new Date().toISOString()
     });
   });
 
