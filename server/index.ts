@@ -60,23 +60,42 @@ app.use((req, res, next) => {
   // Other ports are firewalled. Default to 5000 if not specified.
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
+  
+  log(`=== SERVER STARTUP DEBUG ===`);
+  log(`All environment variables:`);
+  Object.keys(process.env).forEach(key => {
+    if (key.includes('PORT') || key.includes('NODE') || key.includes('SUPABASE')) {
+      log(`  ${key}: ${process.env[key]}`);
+    }
+  });
+  
   const port = parseInt(process.env.PORT || '5000', 10);
   
   log(`Starting server...`);
   log(`Environment: ${process.env.NODE_ENV || 'development'}`);
   log(`Port: ${port}`);
   log(`PORT env var: ${process.env.PORT || 'not set'}`);
+  log(`Parsed port: ${port}`);
+  log(`Port type: ${typeof port}`);
+  log(`Is port valid: ${!isNaN(port) && port > 0 && port < 65536}`);
   
-  server.listen({
-    port,
-    host: "0.0.0.0",
-    reusePort: true,
-  }, () => {
-    log(`✅ Server started successfully on port ${port}`);
-    log(`🌐 Health check available at: http://0.0.0.0:${port}/api/health`);
-    log(`🏠 Root endpoint at: http://0.0.0.0:${port}/`);
-  }).on('error', (err) => {
-    log(`❌ Server failed to start: ${err.message}`);
-    process.exit(1);
-  });
+  // Add a small delay to ensure everything is ready
+  setTimeout(() => {
+    log(`Attempting to start server on port ${port}...`);
+    
+    server.listen({
+      port,
+      host: "0.0.0.0",
+      reusePort: true,
+    }, () => {
+      log(`✅ Server started successfully on port ${port}`);
+      log(`🌐 Health check available at: http://0.0.0.0:${port}/test`);
+      log(`🏠 Root endpoint at: http://0.0.0.0:${port}/`);
+      log(`🔍 API health at: http://0.0.0.0:${port}/api/health`);
+    }).on('error', (err) => {
+      log(`❌ Server failed to start: ${err.message}`);
+      log(`Error details: ${err.stack}`);
+      process.exit(1);
+    });
+  }, 1000);
 })();

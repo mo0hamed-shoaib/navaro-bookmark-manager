@@ -15,7 +15,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(200).json({ 
       message: "Bookmark Manager Backend API",
       status: "running",
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
+      port: process.env.PORT || 'not set',
+      nodeEnv: process.env.NODE_ENV || 'not set'
+    });
+  });
+
+  // Simple test endpoint
+  app.get("/test", (req, res) => {
+    res.status(200).json({ 
+      message: "Server is responding!",
+      timestamp: new Date().toISOString(),
+      port: process.env.PORT || 'not set'
     });
   });
 
