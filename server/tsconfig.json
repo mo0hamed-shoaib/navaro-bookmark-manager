@@ -1,5 +1,4 @@
 {
-  "extends": "../tsconfig.json",
   "include": ["**/*"],
   "exclude": ["node_modules", "dist"],
   "compilerOptions": {
@@ -11,6 +10,10 @@
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node"]
+    "strict": true,
+    "lib": ["esnext"],
+    "types": ["node"],
+    "incremental": true,
+    "tsBuildInfoFile": "./node_modules/typescript/tsbuildinfo"
   }
 }
