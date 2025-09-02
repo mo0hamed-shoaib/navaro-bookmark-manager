@@ -53,14 +53,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger, DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { ContextMenu, ContextMenuContent, ContextMenuTrigger, ContextMenuItem } from "@/components/ui/context-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+
 import { CommandDialog, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem } from "@/components/ui/command";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -163,36 +163,38 @@ export function BookmarkManager() {
   // Performance monitoring
   usePerformanceMonitor("BookmarkManager");
   
+  // View and display state
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [sortBy, setSortBy] = useState<"date" | "name" | "visits" | "custom">("date");
+  const [isAllBookmarksView, setIsAllBookmarksView] = useState(true);
+  
+  // Search and command palette state
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  
-  // Use debounced search for better performance
+  const [commandHistory, setCommandHistory] = useState<string[]>([]);
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
   
-  // Command palette state
-  const [commandHistory, setCommandHistory] = useState<string[]>([]);
-  const [sortBy, setSortBy] = useState<"date" | "name" | "visits" | "custom">("date");
+  // Dialog states
   const [addBookmarkOpen, setAddBookmarkOpen] = useState(false);
   const [addSpaceOpen, setAddSpaceOpen] = useState(false);
   const [addCollectionOpen, setAddCollectionOpen] = useState(false);
   const [editSpaceOpen, setEditSpaceOpen] = useState(false);
   const [editCollectionOpen, setEditCollectionOpen] = useState(false);
-  const [selectedSpace, setSelectedSpace] = useState<string | undefined>();
-  const [selectedCollection, setSelectedCollection] = useState<string | undefined>();
-  const [expandedSpaces, setExpandedSpaces] = useState<Set<string>>(new Set());
-  const [isAllBookmarksView, setIsAllBookmarksView] = useState(true);
-
-
-  const [selectedBookmarks, setSelectedBookmarks] = useState<Set<string>>(new Set());
+  const [editBookmarkOpen, setEditBookmarkOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
-  const [editBookmarkOpen, setEditBookmarkOpen] = useState(false);
-  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
-  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null);
-
   const [sharesOpen, setSharesOpen] = useState(false);
   const [importExportOpen, setImportExportOpen] = useState(false);
+  
+  // Selection and navigation state
+  const [selectedSpace, setSelectedSpace] = useState<string | undefined>();
+  const [selectedCollection, setSelectedCollection] = useState<string | undefined>();
+  const [selectedBookmarks, setSelectedBookmarks] = useState<Set<string>>(new Set());
+  const [expandedSpaces, setExpandedSpaces] = useState<Set<string>>(new Set());
+  
+  // Data state
+  const [editingBookmark, setEditingBookmark] = useState<Bookmark | null>(null);
+  const [currentWorkspaceId, setCurrentWorkspaceId] = useState<string | null>(null);
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
   const { guardAction } = useEditingGuard();
@@ -627,21 +629,25 @@ export function BookmarkManager() {
     }
   };
 
+  // ===== UTILITY FUNCTIONS =====
+  
   // Helper function to get icon component based on icon name
   const getIconComponent = (iconName?: string) => {
     switch (iconName) {
-      case 'home': return Home
-      case 'briefcase': return Briefcase
-      case 'heart': return Heart
-      case 'star': return Star
-      case 'zap': return Zap
-      case 'target': return Target
-      case 'bookmark': return BookmarkIcon
-      case 'clock': return Clock
-      default: return Folder
+      case 'home': return Home;
+      case 'briefcase': return Briefcase;
+      case 'heart': return Heart;
+      case 'star': return Star;
+      case 'zap': return Zap;
+      case 'target': return Target;
+      case 'bookmark': return BookmarkIcon;
+      case 'clock': return Clock;
+      default: return Folder;
     }
-  }
+  };
 
+  // ===== COMMAND PALETTE FUNCTIONS =====
+  
   // Command palette parsing and execution
   const parseCommand = (query: string) => {
     const trimmed = query.trim();
@@ -740,23 +746,25 @@ export function BookmarkManager() {
     }
   };
 
+  // ===== BOOKMARK MANAGEMENT FUNCTIONS =====
+  
   // Filter and sort bookmarks based on selected space, collection, and sort option
   const filteredBookmarks = React.useMemo(() => {
     let sortedBookmarks = [...(bookmarks || [])];
     
     // Sort bookmarks based on the selected sort option
     switch (sortBy) {
-      case "date":
+      case 'date':
         sortedBookmarks.sort((a, b) => {
           const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
           const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
           return dateB - dateA;
         });
         break;
-      case "name":
+      case 'name':
         sortedBookmarks.sort((a, b) => a.title.localeCompare(b.title));
         break;
-      case "visits":
+      case 'visits':
         // For now, we'll sort by updatedAt as a proxy for visits since we don't have visit tracking yet
         sortedBookmarks.sort((a, b) => {
           const dateA = a.updatedAt ? new Date(a.updatedAt).getTime() : 0;
@@ -764,7 +772,7 @@ export function BookmarkManager() {
           return dateB - dateA;
         });
         break;
-      case "custom":
+      case 'custom':
         // Use orderIndex for custom sorting (manual organization)
         sortedBookmarks.sort((a, b) => (a.orderIndex || 0) - (b.orderIndex || 0));
         break;
@@ -789,7 +797,7 @@ export function BookmarkManager() {
   }, [allBookmarks, debouncedSearchQuery]);
 
   const togglePin = (bookmark: Bookmark) => {
-    guardAction("pin bookmark", () => {
+    guardAction('pin bookmark', () => {
       pinBookmarkMutation.mutate({
         id: bookmark.id,
         updates: { isPinned: !bookmark.isPinned },
@@ -812,7 +820,7 @@ export function BookmarkManager() {
     if (!collectionId) return;
     
     // Set sort to custom when reordering
-    setSortBy("custom");
+    setSortBy('custom');
     
     reorderBookmarksMutation.mutate({
       collectionId,
@@ -820,6 +828,8 @@ export function BookmarkManager() {
     });
   };
 
+  // ===== DRAG AND DROP FUNCTIONS =====
+  
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
 
@@ -839,6 +849,8 @@ export function BookmarkManager() {
 
 
 
+  // ===== NAVIGATION AND SELECTION FUNCTIONS =====
+  
   const toggleSpaceExpansion = (spaceId: string) => {
     setExpandedSpaces(prev => {
       const newSet = new Set(prev);
@@ -897,7 +909,8 @@ export function BookmarkManager() {
     });
   };
 
-  // Import/Export functions
+  // ===== IMPORT/EXPORT FUNCTIONS =====
+  
   const exportData = () => {
     console.log('Export button clicked');
     console.log('Spaces:', spaces);
