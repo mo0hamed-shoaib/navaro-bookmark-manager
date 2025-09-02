@@ -170,7 +170,7 @@ export function ShareDialog({
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-2 text-sm text-muted-foreground">
                             <Clock className="h-4 w-4" />
-                            Created {formatDistanceToNow(share.createdAt, { addSuffix: true })}
+                            Created {share.createdAt ? formatDistanceToNow(share.createdAt, { addSuffix: true }) : 'Unknown'}
                           </div>
                           {share.expiresAt && (
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
