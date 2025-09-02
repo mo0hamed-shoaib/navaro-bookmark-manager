@@ -632,7 +632,12 @@ export function BookmarkManager() {
   // ===== UTILITY FUNCTIONS =====
   
   // Helper function to get icon component based on icon name
-  const getIconComponent = (iconName?: string) => {
+  const getIconComponent = (iconName?: string | null) => {
+    // Handle null/undefined case
+    if (!iconName) {
+      return Folder;
+    }
+    
     switch (iconName) {
       case 'home': return Home;
       case 'briefcase': return Briefcase;
