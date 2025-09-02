@@ -2281,7 +2281,7 @@ export function BookmarkManager() {
       onOpenChange={setEditSpaceOpen}
       onSubmit={(data) => updateSpaceMutation.mutate({ id: selectedSpace!, data })}
       onDelete={() => deleteSpaceMutation.mutate(selectedSpace!)}
-      space={currentSpace}
+      space={currentSpace || null}
       isDeleting={deleteSpaceMutation.isPending}
     />
 
@@ -2291,7 +2291,7 @@ export function BookmarkManager() {
       onOpenChange={setEditCollectionOpen}
       onSubmit={(data) => updateCollectionMutation.mutate({ id: selectedCollection!, data })}
       onDelete={() => deleteCollectionMutation.mutate(selectedCollection!)}
-      collection={currentCollection}
+      collection={currentCollection || null}
       isDeleting={deleteCollectionMutation.isPending}
     />
 
