@@ -712,6 +712,12 @@ export function BookmarkManager() {
       case 'navigation':
         // Navigate to space or collection
         const target = parsed.target;
+        
+        // Early return if target is undefined
+        if (!target) {
+          return false;
+        }
+        
         const space = spaces.find(s => s.name.toLowerCase().includes(target));
         const collection = collections.find(c => c.name.toLowerCase().includes(target));
         
