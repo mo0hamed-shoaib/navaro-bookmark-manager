@@ -1,5 +1,5 @@
 import { supabase } from './supabase';
-import type { User, InsertUser, Space, InsertSpace, Collection, InsertCollection, Bookmark, InsertBookmark, Workspace, Session, InsertSession, SessionTab, InsertSessionTab, Share, InsertShare } from '@shared/schema';
+import type { User, InsertUser, Space, InsertSpace, Collection, InsertCollection, Bookmark, InsertBookmark, Workspace, Share, InsertShare } from '@shared/schema';
 
 export interface ISupabaseStorage {
   // Workspace operations
@@ -30,17 +30,7 @@ export interface ISupabaseStorage {
   getPinnedBookmarks(): Promise<Bookmark[]>;
   getRecentBookmarks(limit?: number): Promise<Bookmark[]>;
   
-  // Session operations
-  getSessions(workspaceId: string): Promise<Session[]>;
-  getSession(id: string): Promise<Session | undefined>;
-  createSession(session: InsertSession): Promise<Session>;
-  updateSession(id: string, updates: Partial<InsertSession>): Promise<Session | undefined>;
-  deleteSession(id: string): Promise<boolean>;
-  
-  getSessionTabs(sessionId: string): Promise<SessionTab[]>;
-  createSessionTab(tab: InsertSessionTab): Promise<SessionTab>;
-  deleteSessionTab(id: string): Promise<boolean>;
-  deleteSessionTabs(sessionId: string): Promise<boolean>;
+
   
   // Share operations
   getShares(workspaceId: string): Promise<Share[]>;
@@ -739,54 +729,9 @@ export class SupabaseStorage implements ISupabaseStorage {
     }
   }
 
-  // Session operations
-  async getSessions(workspaceId: string): Promise<Session[]> {
-    try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .select('*')
-        .eq('workspace_id', workspaceId)
-        .order('created_at', { ascending: false });
 
-      if (error) throw error;
 
-      return data?.map(item => ({
-        id: item.id,
-        workspaceId: item.workspace_id,
-        name: item.name,
-        description: item.description,
-        createdAt: new Date(item.created_at),
-        updatedAt: new Date(item.updated_at),
-      })) || [];
-    } catch (error) {
-      console.error('Error fetching sessions:', error);
-      return [];
-    }
-  }
 
-  async getSession(id: string): Promise<Session | undefined> {
-    try {
-      const { data, error } = await supabase
-        .from('sessions')
-        .select('*')
-        .eq('id', id)
-        .single();
-
-      if (error || !data) return undefined;
-
-      return {
-        id: data.id,
-        workspaceId: data.workspace_id,
-        name: data.name,
-        description: data.description,
-        createdAt: new Date(data.created_at),
-        updatedAt: new Date(data.updated_at),
-      };
-    } catch (error) {
-      console.error('Error fetching session:', error);
-      return undefined;
-    }
-  }
 
   async createSession(session: InsertSession): Promise<Session> {
     try {
