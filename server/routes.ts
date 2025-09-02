@@ -10,13 +10,36 @@ import * as cheerio from "cheerio";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Health check endpoint for Railway
-  app.get("/api/health", (req, res) => {
+  // Root endpoint for Railway
+  app.get("/", (req, res) => {
     res.status(200).json({ 
-      status: "healthy", 
-      timestamp: new Date().toISOString(),
-      service: "bookmark-manager-backend"
+      message: "Bookmark Manager Backend API",
+      status: "running",
+      timestamp: new Date().toISOString()
     });
+  });
+
+  // Health check endpoint for Railway
+  app.get("/api/health", async (req, res) => {
+    try {
+      // Basic health check
+      const healthData = {
+        status: "healthy",
+        timestamp: new Date().toISOString(),
+        service: "bookmark-manager-backend",
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV || "development"
+      };
+      
+      res.status(200).json(healthData);
+    } catch (error) {
+      console.error("Health check failed:", error);
+      res.status(500).json({ 
+        status: "unhealthy", 
+        error: error instanceof Error ? error.message : "Unknown error",
+        timestamp: new Date().toISOString()
+      });
+    }
   });
 
   // Workspace routes for Magic Link System
