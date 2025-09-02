@@ -1,14 +1,30 @@
+console.log("🚀 Starting server initialization...");
+
 import express, { type Request, Response, NextFunction } from "express";
+console.log("✅ Express imported successfully");
+
 import { registerRoutes } from "./routes";
+console.log("✅ Routes imported successfully");
+
 import { setupVite, serveStatic, log } from "./vite";
+console.log("✅ Vite utilities imported successfully");
+
 import dotenv from 'dotenv';
+console.log("✅ Dotenv imported successfully");
 
 // Load environment variables early
+console.log("🔧 Loading environment variables...");
 dotenv.config();
+console.log("✅ Environment variables loaded");
 
+console.log("🔧 Creating Express app...");
 const app = express();
+console.log("✅ Express app created");
+
+console.log("🔧 Setting up middleware...");
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+console.log("✅ Middleware configured");
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -41,9 +57,11 @@ app.use((req, res, next) => {
 });
 
 (async () => {
+  console.log("🚀 Starting main server function...");
   let server;
   
   try {
+    console.log("🔧 Starting route registration...");
     log(`Starting route registration...`);
     server = await registerRoutes(app);
     log(`Routes registered successfully`);
