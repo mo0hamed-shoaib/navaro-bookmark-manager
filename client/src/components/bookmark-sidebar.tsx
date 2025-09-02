@@ -134,7 +134,12 @@ export const BookmarkSidebar = React.memo(function BookmarkSidebar({
   const isSpaceExpanded = useCallback((spaceId: string) => expandedSpaces.has(spaceId), [expandedSpaces]);
 
   // Helper function to get icon component based on icon name
-  const getIconComponent = useCallback((iconName?: string) => {
+  const getIconComponent = useCallback((iconName?: string | null) => {
+    // Handle null/undefined case
+    if (!iconName) {
+      return Folder;
+    }
+    
     switch (iconName) {
       case 'home': return Home
       case 'briefcase': return Briefcase
