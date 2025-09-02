@@ -1653,6 +1653,12 @@ export function BookmarkManager() {
             // Handle commands
             if (parsed.type === 'command') {
               const command = parsed.command;
+              
+              // Early return if command is undefined
+              if (!command) {
+                return null;
+              }
+              
               const suggestions = [
                 { cmd: 'add bookmark', label: 'Add Bookmark', icon: Plus },
                 { cmd: 'new collection', label: 'New Collection', icon: Folder },
@@ -1692,6 +1698,12 @@ export function BookmarkManager() {
             // Handle navigation
             if (parsed.type === 'navigation') {
               const target = parsed.target;
+              
+              // Early return if target is undefined
+              if (!target) {
+                return null;
+              }
+              
               const spaceMatches = spaces.filter(s => s.name.toLowerCase().includes(target));
               const collectionMatches = collections.filter(c => c.name.toLowerCase().includes(target));
               const allMatches = [...spaceMatches, ...collectionMatches];
