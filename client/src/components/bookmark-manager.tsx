@@ -28,7 +28,6 @@ import {
   LayoutGrid, 
   Palette, 
   Settings, 
-  User, 
   Bookmark as BookmarkIcon, 
   MoreHorizontal,
   Pin,
@@ -81,6 +80,8 @@ import { EditCollectionDialog } from "@/components/edit-collection-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import { SidebarProvider, SidebarInset, SidebarTrigger } from "@/components/ui/sidebar";
 import { SortableBookmark } from "@/components/sortable-bookmark";
+import { EditingToggle } from "@/components/editing-toggle";
+import { useEditingGuard } from "@/hooks/use-editing-guard";
 
 // Favicon component with fallback
 const Favicon = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
@@ -154,6 +155,7 @@ export function BookmarkManager() {
   const [importExportOpen, setImportExportOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const queryClient = useQueryClient();
+  const { guardAction } = useEditingGuard();
 
   // Drag and drop sensors
   const sensors = useSensors(
@@ -732,9 +734,11 @@ export function BookmarkManager() {
   }, [bookmarks, sortBy]);
 
   const togglePin = (bookmark: Bookmark) => {
-    pinBookmarkMutation.mutate({
-      id: bookmark.id,
-      updates: { isPinned: !bookmark.isPinned },
+    guardAction("pin bookmark", () => {
+      pinBookmarkMutation.mutate({
+        id: bookmark.id,
+        updates: { isPinned: !bookmark.isPinned },
+      });
     });
   };
 
@@ -765,14 +769,16 @@ export function BookmarkManager() {
     const { active, over } = event;
 
     if (active.id !== over?.id) {
-      const oldIndex = filteredBookmarks.findIndex(bookmark => bookmark.id === active.id);
-      const newIndex = filteredBookmarks.findIndex(bookmark => bookmark.id === over?.id);
+      guardAction("reorder bookmarks", () => {
+        const oldIndex = filteredBookmarks.findIndex(bookmark => bookmark.id === active.id);
+        const newIndex = filteredBookmarks.findIndex(bookmark => bookmark.id === over?.id);
 
-      if (oldIndex !== -1 && newIndex !== -1) {
-        const newOrder = arrayMove(filteredBookmarks, oldIndex, newIndex);
-        const bookmarkIds = newOrder.map(bookmark => bookmark.id);
-        reorderBookmarks(bookmarkIds);
-      }
+        if (oldIndex !== -1 && newIndex !== -1) {
+          const newOrder = arrayMove(filteredBookmarks, oldIndex, newIndex);
+          const bookmarkIds = newOrder.map(bookmark => bookmark.id);
+          reorderBookmarks(bookmarkIds);
+        }
+      });
     }
   };
 
@@ -827,11 +833,13 @@ export function BookmarkManager() {
   };
 
   const selectAllBookmarks = () => {
-    if (selectedBookmarks.size === filteredBookmarks.length) {
-      setSelectedBookmarks(new Set());
-    } else {
-      setSelectedBookmarks(new Set(filteredBookmarks.map(b => b.id)));
-    }
+    guardAction("select bookmarks", () => {
+      if (selectedBookmarks.size === filteredBookmarks.length) {
+        setSelectedBookmarks(new Set());
+      } else {
+        setSelectedBookmarks(new Set(filteredBookmarks.map(b => b.id)));
+      }
+    });
   };
 
   // Import/Export functions
@@ -974,31 +982,41 @@ export function BookmarkManager() {
         }}
         onToggleSpaceExpansion={toggleSpaceExpansion}
         onAddBookmark={() => setAddBookmarkOpen(true)}
-        onAddSpace={() => setAddSpaceOpen(true)}
+                        onAddSpace={() => guardAction("add space", () => setAddSpaceOpen(true))}
         onAddCollection={(spaceId) => {
           // When adding collection from space context menu, pre-select that space
-          if (spaceId) {
-            setSelectedSpace(spaceId);
-          }
-          setAddCollectionOpen(true);
+          guardAction("add collection", () => {
+            if (spaceId) {
+              setSelectedSpace(spaceId);
+            }
+            setAddCollectionOpen(true);
+          });
         }}
         onEditSpace={(spaceId) => {
-          setSelectedSpace(spaceId);
-          setEditSpaceOpen(true);
+          guardAction("edit space", () => {
+            setSelectedSpace(spaceId);
+            setEditSpaceOpen(true);
+          });
         }}
         onEditCollection={(collectionId) => {
-          setSelectedCollection(collectionId);
-          setEditCollectionOpen(true);
+          guardAction("edit collection", () => {
+            setSelectedCollection(collectionId);
+            setEditCollectionOpen(true);
+          });
         }}
         onDeleteSpace={(spaceId) => {
-          if (confirm(`Are you sure you want to delete this space? This will also delete all collections and bookmarks within it.`)) {
-            deleteSpaceMutation.mutate(spaceId);
-          }
+          guardAction("delete space", () => {
+            if (confirm(`Are you sure you want to delete this space? This will also delete all collections and bookmarks within it.`)) {
+              deleteSpaceMutation.mutate(spaceId);
+            }
+          });
         }}
         onDeleteCollection={(collectionId) => {
-          if (confirm(`Are you sure you want to delete this collection? This will also delete all bookmarks within it.`)) {
-            deleteCollectionMutation.mutate(collectionId);
-          }
+          guardAction("delete collection", () => {
+            if (confirm(`Are you sure you want to delete this collection? This will also delete all bookmarks within it.`)) {
+              deleteCollectionMutation.mutate(collectionId);
+            }
+          });
         }}
         onSearch={() => {
           setSearchQuery(""); // Clear any existing search
@@ -1201,7 +1219,7 @@ export function BookmarkManager() {
 
             {/* Add Bookmark */}
             <Button 
-              onClick={() => setAddBookmarkOpen(true)} 
+              onClick={() => guardAction("add bookmark", () => setAddBookmarkOpen(true))} 
               data-testid="button-add-bookmark-header"
               size="sm" 
               className="flex-shrink-0"
@@ -1277,10 +1295,10 @@ export function BookmarkManager() {
               </DropdownMenuContent>
             </DropdownMenu>
 
-            {/* User Menu - Desktop */}
-            <Button variant="ghost" size="sm" data-testid="button-user-menu" className="hidden sm:flex">
-              <User className="h-4 w-4" />
-            </Button>
+            {/* Editing Toggle */}
+            <EditingToggle />
+
+
           </div>
         </header>
 
@@ -1343,7 +1361,7 @@ export function BookmarkManager() {
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={handleContextSettings}
+                  onClick={() => guardAction("edit settings", handleContextSettings)}
                   data-testid="button-collection-settings"
                   title={selectedCollection ? "Edit Collection" : selectedSpace ? "Edit Space" : "Settings"}
                 >
@@ -1358,7 +1376,7 @@ export function BookmarkManager() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={selectAllBookmarks}
+                  onClick={() => guardAction("select bookmarks", selectAllBookmarks)}
                   data-testid="button-select-all"
                   className="flex-shrink-0"
                 >
@@ -1446,10 +1464,14 @@ export function BookmarkManager() {
                       isSelected={selectedBookmarks.has(bookmark.id)}
                       onToggleSelect={toggleSelectBookmark}
                       onEdit={(bookmark) => {
-                        setEditingBookmark(bookmark);
-                        setEditBookmarkOpen(true);
+                        guardAction("edit bookmark", () => {
+                          setEditingBookmark(bookmark);
+                          setEditBookmarkOpen(true);
+                        });
                       }}
-                      onDelete={deleteBookmark}
+                      onDelete={(bookmarkId) => {
+                        guardAction("delete bookmark", () => deleteBookmark(bookmarkId));
+                      }}
                       onPin={togglePin}
                       onCopyUrl={(url) => {
                         navigator.clipboard.writeText(url);
