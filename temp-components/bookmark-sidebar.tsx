@@ -125,7 +125,7 @@ export function BookmarkSidebar({
              <BookmarkIcon className="text-primary-foreground text-sm" />
            </div>
            <div className="flex-1 min-w-0 group-data-[state=collapsed]:hidden">
-             <div className="font-semibold text-lg">Toby</div>
+             <div className="font-semibold text-lg">Navaro</div>
              {currentWorkspaceId && (
                <div className="text-xs text-muted-foreground">
                  Workspace: {currentWorkspaceId.substring(0, 8)}...

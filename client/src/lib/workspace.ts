@@ -5,7 +5,7 @@ export interface Workspace {
   updatedAt: string;
 }
 
-const WORKSPACE_STORAGE_KEY = 'toby_workspace_id';
+const WORKSPACE_STORAGE_KEY = 'navaro_workspace_id';
 
 export class WorkspaceManager {
   private static instance: WorkspaceManager;

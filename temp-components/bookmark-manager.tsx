@@ -2136,7 +2136,7 @@ export function BookmarkManager() {
             <div>
               <h3 className="text-lg font-medium mb-4">About</h3>
               <div className="text-sm text-muted-foreground space-y-2">
-                <div>Toby Bookmark Manager v1.0</div>
+                <div>Navaro Bookmark Manager v1.0</div>
                 <div>A modern alternative to browser bookmark management</div>
                 <div className="flex items-center space-x-4 pt-2">
                   <Button variant="outline" size="sm">

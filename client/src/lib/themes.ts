@@ -135,10 +135,10 @@ export function applyTheme(themeName: string) {
 }
 
 export function getTheme(): string {
-  return localStorage.getItem("toby-theme") || "nomad";
+  return localStorage.getItem("navaro-theme") || "nomad";
 }
 
 export function setTheme(themeName: string) {
-  localStorage.setItem("toby-theme", themeName);
+  localStorage.setItem("navaro-theme", themeName);
   applyTheme(themeName);
 }
