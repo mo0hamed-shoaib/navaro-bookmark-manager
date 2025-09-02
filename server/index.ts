@@ -61,11 +61,22 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || '5000', 10);
+  
+  log(`Starting server...`);
+  log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+  log(`Port: ${port}`);
+  log(`PORT env var: ${process.env.PORT || 'not set'}`);
+  
   server.listen({
     port,
     host: "0.0.0.0",
     reusePort: true,
   }, () => {
-    log(`serving on port ${port}`);
+    log(`✅ Server started successfully on port ${port}`);
+    log(`🌐 Health check available at: http://0.0.0.0:${port}/api/health`);
+    log(`🏠 Root endpoint at: http://0.0.0.0:${port}/`);
+  }).on('error', (err) => {
+    log(`❌ Server failed to start: ${err.message}`);
+    process.exit(1);
   });
 })();

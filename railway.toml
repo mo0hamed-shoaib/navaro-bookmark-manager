@@ -6,6 +6,8 @@ startCommand = "npm start"
 healthcheckPath = "/api/health"
 healthcheckTimeout = 600
 restartPolicyType = "on_failure"
+port = 3000
+healthcheckInterval = 30
 
 [[services]]
 name = "bookmark-manager-backend"
