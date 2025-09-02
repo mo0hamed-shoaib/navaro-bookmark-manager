@@ -125,10 +125,50 @@ const bookmarkFormSchema = z.object({
 
 type ViewMode = "grid" | "list" | "compact" | "grid2";
 
+// Custom hook for performance monitoring
+function usePerformanceMonitor(componentName: string) {
+  useEffect(() => {
+    const startTime = performance.now();
+    
+    return () => {
+      const endTime = performance.now();
+      const duration = endTime - startTime;
+      
+      // Log performance data in development
+      if (process.env.NODE_ENV === 'development') {
+        console.log(`${componentName} render time: ${duration.toFixed(2)}ms`);
+      }
+    };
+  });
+}
+
+// Custom hook for debounced search
+function useDebounce<T>(value: T, delay: number): T {
+  const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export function BookmarkManager() {
+  // Performance monitoring
+  usePerformanceMonitor("BookmarkManager");
+  
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchOpen, setSearchOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  
+  // Use debounced search for better performance
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
   
   // Command palette state
   const [commandHistory, setCommandHistory] = useState<string[]>([]);
@@ -732,6 +772,21 @@ export function BookmarkManager() {
     
     return sortedBookmarks;
   }, [bookmarks, sortBy]);
+
+  // Memoized search results for better performance
+  const searchResults = React.useMemo(() => {
+    if (!debouncedSearchQuery.trim()) return [];
+    
+    return allBookmarks
+      .filter(bookmark => {
+        const queryLower = debouncedSearchQuery.toLowerCase();
+        return bookmark.title.toLowerCase().includes(queryLower) ||
+               bookmark.url.toLowerCase().includes(queryLower) ||
+               bookmark.description?.toLowerCase().includes(queryLower) ||
+               (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(queryLower)));
+      })
+      .slice(0, 10);
+  }, [allBookmarks, debouncedSearchQuery]);
 
   const togglePin = (bookmark: Bookmark) => {
     guardAction("pin bookmark", () => {
@@ -1640,21 +1695,12 @@ export function BookmarkManager() {
               }
             }
             
-            // Default: search bookmarks
-            const filtered = allBookmarks
-              .filter(bookmark => {
-                const queryLower = query.toLowerCase();
-                return bookmark.title.toLowerCase().includes(queryLower) ||
-                       bookmark.url.toLowerCase().includes(queryLower) ||
-                       bookmark.description?.toLowerCase().includes(queryLower) ||
-                       (bookmark.tags && bookmark.tags.some(tag => tag.toLowerCase().includes(queryLower)));
-              });
-            
-            if (filtered.length === 0) {
+            // Use memoized search results for better performance
+            if (searchResults.length === 0) {
               return <CommandEmpty>No results found.</CommandEmpty>;
             }
             
-            const resultsToShow = filtered.slice(0, 10);
+            const resultsToShow = searchResults;
             
             return (
               <div className="p-2">

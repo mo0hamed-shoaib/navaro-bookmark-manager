@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useState } from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Card, CardContent } from "@/components/ui/card";
@@ -8,14 +8,13 @@ import { ContextMenu, ContextMenuContent, ContextMenuTrigger, ContextMenuItem } 
 import { cn } from "@/lib/utils";
 import { ExternalLink, Edit, Pin, Trash2, Copy, MoreHorizontal, GripVertical } from "lucide-react";
 import type { Bookmark } from "@shared/schema";
-import { useState } from "react";
 
-// Favicon component with fallback
-const Favicon = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
+// Favicon component with fallback - memoized to prevent re-renders
+const Favicon = React.memo(({ src, alt, className }: { src: string; alt: string; className: string }) => {
   const [imgSrc, setImgSrc] = useState(src);
   const [hasError, setHasError] = useState(false);
 
-  const handleError = () => {
+  const handleError = useCallback(() => {
     if (!hasError) {
       setHasError(true);
       // Fallback to Google's favicon service
@@ -28,7 +27,7 @@ const Favicon = ({ src, alt, className }: { src: string; alt: string; className:
         setImgSrc("https://www.google.com/s2/favicons?domain=example.com&sz=32");
       }
     }
-  };
+  }, [src, hasError]);
 
   return (
     <img 
@@ -38,7 +37,9 @@ const Favicon = ({ src, alt, className }: { src: string; alt: string; className:
       onError={handleError}
     />
   );
-};
+});
+
+Favicon.displayName = 'Favicon';
 
 interface SortableBookmarkProps {
   bookmark: Bookmark;
@@ -52,7 +53,8 @@ interface SortableBookmarkProps {
   onOpenUrl: (url: string) => void;
 }
 
-export function SortableBookmark({
+// Main component wrapped with React.memo for performance optimization
+export const SortableBookmark = React.memo(function SortableBookmark({
   bookmark,
   viewMode,
   isSelected,
@@ -77,15 +79,16 @@ export function SortableBookmark({
     transition,
   };
 
-  const handleClick = (e: React.MouseEvent) => {
+  // Memoized event handlers to prevent unnecessary re-renders
+  const handleClick = useCallback((e: React.MouseEvent) => {
     if (e.metaKey || e.ctrlKey) {
       onToggleSelect(bookmark.id);
     } else {
       onOpenUrl(bookmark.url);
     }
-  };
+  }, [onToggleSelect, onOpenUrl, bookmark.id, bookmark.url]);
 
-  const handleContextMenu = (e: React.MouseEvent, bookmark: Bookmark) => {
+  const handleContextMenu = useCallback((e: React.MouseEvent, bookmark: Bookmark) => {
     e.stopPropagation();
     // Trigger context menu by simulating right-click
     const rect = e.currentTarget.getBoundingClientRect();
@@ -95,7 +98,39 @@ export function SortableBookmark({
       clientY: rect.bottom + 5,
     });
     e.currentTarget.dispatchEvent(contextMenuEvent);
-  };
+  }, []);
+
+  const handlePin = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onPin(bookmark);
+  }, [onPin, bookmark]);
+
+  const handleEdit = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onEdit(bookmark);
+  }, [onEdit, bookmark]);
+
+  const handleDelete = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onDelete(bookmark.id);
+  }, [onDelete, bookmark.id]);
+
+  const handleCopyUrl = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    onCopyUrl(bookmark.url);
+  }, [onCopyUrl, bookmark.url]);
+
+  const handleOpenUrl = useCallback(() => {
+    onOpenUrl(bookmark.url);
+  }, [onOpenUrl, bookmark.url]);
+
+  const handleOpenInNewTab = useCallback(() => {
+    window.open(bookmark.url, "_blank");
+  }, [bookmark.url]);
+
+  const handleOpenInSameTab = useCallback(() => {
+    window.open(bookmark.url, "_self");
+  }, [bookmark.url]);
 
   return (
     <div ref={setNodeRef} style={style}>
@@ -170,10 +205,7 @@ export function SortableBookmark({
                         variant="ghost"
                         size="sm"
                         className="p-1 h-6 w-6"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onPin(bookmark);
-                        }}
+                        onClick={handlePin}
                         data-testid={`button-pin-${bookmark.id}`}
                         title={bookmark.isPinned ? "Unpin" : "Pin"}
                       >
@@ -186,10 +218,7 @@ export function SortableBookmark({
                         variant="ghost"
                         size="sm"
                         className="p-1 h-6 w-6"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onEdit(bookmark);
-                        }}
+                        onClick={handleEdit}
                         data-testid={`button-edit-${bookmark.id}`}
                         title="Edit"
                       >
@@ -240,10 +269,7 @@ export function SortableBookmark({
                       variant="ghost"
                       size="sm"
                       className="p-0.5 h-5 w-5"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPin(bookmark);
-                      }}
+                      onClick={handlePin}
                       data-testid={`button-pin-${bookmark.id}`}
                       title={bookmark.isPinned ? "Unpin" : "Pin"}
                     >
@@ -256,10 +282,7 @@ export function SortableBookmark({
                       variant="ghost"
                       size="sm"
                       className="p-0.5 h-5 w-5"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(bookmark);
-                      }}
+                      onClick={handleEdit}
                       data-testid={`button-edit-${bookmark.id}`}
                       title="Edit"
                     >
@@ -332,10 +355,7 @@ export function SortableBookmark({
                       variant="ghost"
                       size="sm"
                       className="p-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPin(bookmark);
-                      }}
+                      onClick={handlePin}
                       data-testid={`button-pin-${bookmark.id}`}
                       title={bookmark.isPinned ? "Unpin" : "Pin"}
                     >
@@ -348,10 +368,7 @@ export function SortableBookmark({
                       variant="ghost"
                       size="sm"
                       className="p-1"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(bookmark);
-                      }}
+                      onClick={handleEdit}
                       data-testid={`button-edit-${bookmark.id}`}
                       title="Edit"
                     >
@@ -401,10 +418,7 @@ export function SortableBookmark({
                       variant="ghost"
                       size="sm"
                       className="p-0.5 h-5 w-5"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onPin(bookmark);
-                      }}
+                      onClick={handlePin}
                       data-testid={`button-pin-${bookmark.id}`}
                       title={bookmark.isPinned ? "Unpin" : "Pin"}
                     >
@@ -417,10 +431,7 @@ export function SortableBookmark({
                       variant="ghost"
                       size="sm"
                       className="p-0.5 h-5 w-5"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onEdit(bookmark);
-                      }}
+                      onClick={handleEdit}
                       data-testid={`button-edit-${bookmark.id}`}
                       title="Edit"
                     >
@@ -470,27 +481,27 @@ export function SortableBookmark({
           </Card>
         </ContextMenuTrigger>
         <ContextMenuContent>
-          <ContextMenuItem onClick={() => window.open(bookmark.url, "_self")}>
+          <ContextMenuItem onClick={handleOpenUrl}>
             <ExternalLink className="mr-2 h-4 w-4" />
             Open
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => window.open(bookmark.url, "_blank")}>
+          <ContextMenuItem onClick={handleOpenInNewTab}>
             <ExternalLink className="mr-2 h-4 w-4" />
             Open in New Tab
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onPin(bookmark)}>
+          <ContextMenuItem onClick={handlePin}>
             <Pin className={cn("mr-2 h-4 w-4", bookmark.isPinned && "fill-current")} />
             {bookmark.isPinned ? "Unpin" : "Pin to Top"}
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onEdit(bookmark)}>
+          <ContextMenuItem onClick={handleEdit}>
             <Edit className="mr-2 h-4 w-4" />
             Edit
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onCopyUrl(bookmark.url)}>
+          <ContextMenuItem onClick={handleCopyUrl}>
             <Copy className="mr-2 h-4 w-4" />
             Copy Link
           </ContextMenuItem>
-          <ContextMenuItem onClick={() => onDelete(bookmark.id)}>
+          <ContextMenuItem onClick={handleDelete}>
             <Trash2 className="mr-2 h-4 w-4" />
             Delete
           </ContextMenuItem>
@@ -498,4 +509,4 @@ export function SortableBookmark({
       </ContextMenu>
     </div>
   );
-}
+});

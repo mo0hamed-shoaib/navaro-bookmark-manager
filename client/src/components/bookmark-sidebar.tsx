@@ -39,7 +39,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar"
 import type { Space, Collection, Bookmark } from "@shared/schema"
-import { useState } from "react";
+import { useState, useCallback } from "react";
 
 // Favicon component with fallback
 const Favicon = ({ src, alt, className }: { src: string; alt: string; className: string }) => {
@@ -101,7 +101,7 @@ interface BookmarkSidebarProps {
   isLoadingCollections?: boolean
 }
 
-export function BookmarkSidebar({
+export const BookmarkSidebar = React.memo(function BookmarkSidebar({
   spaces,
   collections,
   bookmarks,
@@ -131,10 +131,10 @@ export function BookmarkSidebar({
   isLoadingCollections = false,
 }: BookmarkSidebarProps) {
 
-  const isSpaceExpanded = (spaceId: string) => expandedSpaces.has(spaceId)
+  const isSpaceExpanded = useCallback((spaceId: string) => expandedSpaces.has(spaceId), [expandedSpaces]);
 
   // Helper function to get icon component based on icon name
-  const getIconComponent = (iconName?: string) => {
+  const getIconComponent = useCallback((iconName?: string) => {
     switch (iconName) {
       case 'home': return Home
       case 'briefcase': return Briefcase
@@ -146,7 +146,36 @@ export function BookmarkSidebar({
       case 'clock': return Clock
       default: return Folder
     }
-  }
+  }, []);
+
+  // Memoized handlers to prevent unnecessary re-renders
+  const handleSpaceClick = useCallback((spaceId: string) => {
+    onSpaceClick(spaceId);
+  }, [onSpaceClick]);
+
+  const handleCollectionClick = useCallback((collectionId: string) => {
+    onCollectionClick(collectionId);
+  }, [onCollectionClick]);
+
+  const handleAddCollection = useCallback((spaceId: string) => {
+    onAddCollection(spaceId);
+  }, [onAddCollection]);
+
+  const handleEditSpace = useCallback((spaceId: string) => {
+    onEditSpace(spaceId);
+  }, [onEditSpace]);
+
+  const handleDeleteSpace = useCallback((spaceId: string) => {
+    onDeleteSpace(spaceId);
+  }, [onDeleteSpace]);
+
+  const handleEditCollection = useCallback((collectionId: string) => {
+    onEditCollection(collectionId);
+  }, [onEditCollection]);
+
+  const handleDeleteCollection = useCallback((collectionId: string) => {
+    onDeleteCollection(collectionId);
+  }, [onDeleteCollection]);
 
   return (
     <Sidebar collapsible="icon" className="border-r">
@@ -288,7 +317,7 @@ export function BookmarkSidebar({
                      <CollapsibleTrigger asChild>
                                                  <SidebarMenuButton
                           isActive={selectedSpace === space.id && selectedCollection === undefined}
-                          onClick={() => onSpaceClick(space.id)}
+                          onClick={() => handleSpaceClick(space.id)}
                           tooltip={space.name}
                           className="cursor-pointer"
                         >
@@ -299,16 +328,16 @@ export function BookmarkSidebar({
                      </CollapsibleTrigger>
                    </ContextMenuTrigger>
                                          <ContextMenuContent>
-                      <ContextMenuItem onClick={() => onAddCollection(space.id)}>
+                      <ContextMenuItem onClick={() => handleAddCollection(space.id)}>
                         <Plus className="h-4 w-4 mr-2" />
                         Add Collection
                       </ContextMenuItem>
-                      <ContextMenuItem onClick={() => onEditSpace(space.id)}>
+                      <ContextMenuItem onClick={() => handleEditSpace(space.id)}>
                         <Edit className="h-4 w-4 mr-2" />
                         Edit Space
                       </ContextMenuItem>
                       <ContextMenuItem 
-                        onClick={() => onDeleteSpace(space.id)}
+                        onClick={() => handleDeleteSpace(space.id)}
                         className="text-destructive"
                       >
                         <Trash className="h-4 w-4 mr-2" />
@@ -332,7 +361,7 @@ export function BookmarkSidebar({
                                <ContextMenuTrigger asChild>
                                                                      <SidebarMenuSubButton
                                     isActive={selectedCollection === collection.id}
-                                    onClick={() => onCollectionClick(collection.id)}
+                                    onClick={() => handleCollectionClick(collection.id)}
                                     title={collection.name}
                                     className="cursor-pointer"
                                   >
@@ -344,12 +373,12 @@ export function BookmarkSidebar({
                                  </SidebarMenuSubButton>
                                </ContextMenuTrigger>
                                <ContextMenuContent>
-                                 <ContextMenuItem onClick={() => onEditCollection(collection.id)}>
+                                 <ContextMenuItem onClick={() => handleEditCollection(collection.id)}>
                                    <Edit className="h-4 w-4 mr-2" />
                                    Edit Collection
                                  </ContextMenuItem>
                                  <ContextMenuItem 
-                                   onClick={() => onDeleteCollection(collection.id)}
+                                   onClick={() => handleDeleteCollection(collection.id)}
                                    className="text-destructive"
                                  >
                                    <Trash className="h-4 w-4 mr-2" />
@@ -381,4 +410,4 @@ export function BookmarkSidebar({
        <SidebarRail />
      </Sidebar>
    )
- }
+ })
